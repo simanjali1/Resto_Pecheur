@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/       # Ignore all npm/yarn dependencies (never commit these)
+
+# Environment variables
+.env                # Default environment file
+.env.local          # Local overrides
+.env*.local         # Catch-all for other local env files (development, test, etc.)
+
+# Build artifacts
+dist/               # Production build output (if using Vite, tsc, etc.)
+build/              # React/Vite build folder
+*.log               # Log files from any tool
+
+# System files
+.DS_Store           # macOS metadata file
+Thumbs.db           # Windows thumbnail cache
+
+# Editor/IDE
+.vscode/            # VS Code settings
+.idea/              # JetBrains IDE settings
