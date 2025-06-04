@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Calendar from 'react-calendar';
+import MenuSelector from '../components/MenuSelector';
 import 'react-calendar/dist/Calendar.css';
 import './BookingPage.css';
 
@@ -13,7 +14,9 @@ function BookingPage() {
     date: null,
     time: '',
     number_of_guests: 2,
-    special_requests: ''
+    special_requests: '',
+    wants_preorder: false,
+    selected_dishes: []
   });
   
   const [timeSlots, setTimeSlots] = useState([]);
@@ -21,6 +24,7 @@ function BookingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedDate, setSelectedDate] = useState(null);
+  const [showMenuSelector, setShowMenuSelector] = useState(false);
 
   // Récupérer les créneaux horaires
   useEffect(() => {
@@ -69,6 +73,33 @@ function BookingPage() {
     }));
   };
 
+  const handlePreorderChange = (checked) => {
+    setFormData(prev => ({
+      ...prev,
+      wants_preorder: checked,
+      selected_dishes: checked ? prev.selected_dishes : []
+    }));
+    
+    if (checked) {
+      setShowMenuSelector(true);
+    }
+  };
+
+  const handleMenuUpdate = (newSelectedDishes) => {
+    setFormData(prev => ({
+      ...prev,
+      selected_dishes: newSelectedDishes
+    }));
+  };
+
+  const handleMenuClose = () => {
+    setShowMenuSelector(false);
+  };
+
+  const openMenuSelector = () => {
+    setShowMenuSelector(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -77,8 +108,15 @@ function BookingPage() {
     try {
       // Préparer les données avec la date au format string
       const reservationData = {
-        ...formData,
-        date: formData.date.toISOString().split('T')[0]
+        customer_name: formData.customer_name,
+        customer_email: formData.customer_email,
+        customer_phone: formData.customer_phone,
+        date: formData.date.toISOString().split('T')[0],
+        time: formData.time,
+        number_of_guests: formData.number_of_guests,
+        special_requests: formData.wants_preorder 
+          ? `${formData.special_requests}\n\nPré-commande:\n${formData.selected_dishes.map(d => `${d.name} x${d.quantity} (${d.price * d.quantity} DH)`).join('\n')}`
+          : formData.special_requests
       };
 
       const response = await fetch('http://127.0.0.1:8000/api/reservations/create/', {
@@ -276,6 +314,68 @@ function BookingPage() {
                     placeholder="Allergies, occasion spéciale, préférences de table..."
                   />
                 </div>
+
+                {/* Pré-commande optionnelle */}
+                <div className="form-group">
+                  <div className="preorder-section">
+                    <label className="preorder-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={formData.wants_preorder}
+                        onChange={(e) => handlePreorderChange(e.target.checked)}
+                      />
+                      <span className="checkmark"></span>
+                      <span className="preorder-text">
+                        <strong>Je veux pré-commander mes plats</strong>
+                        <small>Gagnez du temps ! Vos plats seront prêts à votre arrivée</small>
+                      </span>
+                    </label>
+                  </div>
+
+                  {formData.wants_preorder && (
+                    <div className="preorder-summary">
+                      <div className="preorder-actions">
+                        <button 
+                          type="button"
+                          className="select-dishes-btn"
+                          onClick={openMenuSelector}
+                        >
+                          📋 Sélectionner des plats
+                        </button>
+                      </div>
+
+                      {formData.selected_dishes.length > 0 && (
+                        <div className="selected-dishes-summary">
+                          <h5>Plats sélectionnés :</h5>
+                          <div className="dishes-list">
+                            {formData.selected_dishes.map(dish => (
+                              <div key={dish.id} className="selected-dish">
+                                <span className="dish-details">
+                                  {dish.name} x{dish.quantity}
+                                </span>
+                                <span className="dish-total">
+                                  {dish.price * dish.quantity} DH
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="total-summary">
+                            <strong>
+                              Total estimé : {formData.selected_dishes.reduce((total, dish) => total + (dish.price * dish.quantity), 0)} DH
+                            </strong>
+                          </div>
+                          <button 
+                            type="button"
+                            className="modify-dishes-btn"
+                            onClick={openMenuSelector}
+                          >
+                            Modifier la sélection
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="form-actions">
@@ -297,6 +397,15 @@ function BookingPage() {
             </form>
           </div>
         </div>
+
+        {/* MenuSelector Modal */}
+        {showMenuSelector && (
+          <MenuSelector
+            selectedDishes={formData.selected_dishes}
+            onDishUpdate={handleMenuUpdate}
+            onClose={handleMenuClose}
+          />
+        )}
       </div>
     </div>
   );
