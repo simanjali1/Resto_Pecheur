@@ -39,9 +39,14 @@ function HomePage() {
             <p className="restaurant-location">
               Boulevard Mohamed Hafidi, Tiznit • Cuisine authentique
             </p>
-            <Link to="/reservation" className="cta-button">
-              Réserver une table
-            </Link>
+            <div className="hero-buttons">
+              <Link to="/reservation" className="cta-button">
+                Réserver une table
+              </Link>
+              <Link to="/menu" className="cta-button secondary">
+                Voir le menu
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -134,10 +139,15 @@ function HomePage() {
       <section className="cta-section">
         <div className="container">
           <h2>Prêt à nous rendre visite ?</h2>
-          <p>Réservez votre table dès maintenant pour une expérience inoubliable</p>
-          <Link to="/reservation" className="cta-button large">
-            Réserver maintenant
-          </Link>
+          <p>Découvrez notre menu ou réservez votre table dès maintenant</p>
+          <div className="cta-buttons">
+            <Link to="/menu" className="cta-button secondary large">
+              📋 Découvrir le menu
+            </Link>
+            <Link to="/reservation" className="cta-button large">
+              Réserver maintenant
+            </Link>
+          </div>
         </div>
       </section>
 

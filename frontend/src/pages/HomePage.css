@@ -52,6 +52,14 @@
   opacity: 0.9;
 }
 
+.hero-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+
 .cta-button {
   display: inline-block;
   background: #e74c3c;
@@ -71,9 +79,30 @@
   box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
 }
 
+.cta-button.secondary {
+  background: transparent;
+  color: white;
+  border: 2px solid white;
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+}
+
+.cta-button.secondary:hover {
+  background: white;
+  color: #3498db;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+}
+
 .cta-button.large {
   padding: 20px 40px;
   font-size: 1.3rem;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 /* About Section */
@@ -256,6 +285,16 @@
   
   .restaurant-tagline {
     font-size: 1.2rem;
+  }
+  
+  .hero-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
   }
   
   .about-content {
