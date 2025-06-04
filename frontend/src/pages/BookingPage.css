@@ -252,7 +252,105 @@
   transform: translateY(-2px);
 }
 
-/* Responsive */
+/* Calendar Styles */
+.calendar-container {
+  display: flex;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.booking-calendar {
+  border: 2px solid #e0e6ed;
+  border-radius: 12px;
+  padding: 20px;
+  background: #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  font-family: inherit;
+}
+
+.booking-calendar .react-calendar__navigation {
+  margin-bottom: 20px;
+}
+
+.booking-calendar .react-calendar__navigation button {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 12px 15px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.booking-calendar .react-calendar__navigation button:hover {
+  background: #2980b9;
+}
+
+.booking-calendar .react-calendar__navigation button:disabled {
+  background: #bdc3c7;
+}
+
+.booking-calendar .react-calendar__month-view__weekdays {
+  text-align: center;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.booking-calendar .react-calendar__tile {
+  background: #f8f9fa;
+  border: 1px solid #e0e6ed;
+  padding: 15px 10px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.booking-calendar .react-calendar__tile:hover {
+  background: #ebf3fd;
+  color: #2980b9;
+}
+
+.booking-calendar .react-calendar__tile--active {
+  background: #3498db !important;
+  color: white !important;
+  border-color: #2980b9;
+}
+
+.booking-calendar .react-calendar__tile--now {
+  background: #e8f5e8;
+  color: #27ae60;
+  font-weight: bold;
+}
+
+.booking-calendar .react-calendar__tile:disabled {
+  background: #ecf0f1 !important;
+  color: #95a5a6 !important;
+  cursor: not-allowed;
+}
+
+.selected-date {
+  text-align: center;
+  margin-top: 15px;
+  padding: 10px 15px;
+  background: #e8f5e8;
+  color: #27ae60;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* Calendar responsive */
+@media (max-width: 768px) {
+  .booking-calendar {
+    padding: 15px;
+    margin: 0 -10px;
+  }
+  
+  .booking-calendar .react-calendar__tile {
+    padding: 10px 5px;
+    font-size: 0.9rem;
+  }
+}
 @media (max-width: 768px) {
   .booking-form {
     padding: 30px 20px;

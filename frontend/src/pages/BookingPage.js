@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 import './BookingPage.css';
 
 function BookingPage() {
@@ -8,7 +10,7 @@ function BookingPage() {
     customer_name: '',
     customer_email: '',
     customer_phone: '',
-    date: '',
+    date: null,
     time: '',
     number_of_guests: 2,
     special_requests: ''
@@ -18,6 +20,7 @@ function BookingPage() {
   const [availability, setAvailability] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedDate, setSelectedDate] = useState(null);
 
   // Récupérer les créneaux horaires
   useEffect(() => {
@@ -30,7 +33,8 @@ function BookingPage() {
   // Vérifier la disponibilité quand la date change
   useEffect(() => {
     if (formData.date) {
-      fetch(`http://127.0.0.1:8000/api/availability/?date=${formData.date}`)
+      const dateString = formData.date.toISOString().split('T')[0];
+      fetch(`http://127.0.0.1:8000/api/availability/?date=${dateString}`)
         .then(response => response.json())
         .then(data => {
           if (data.is_closed) {
@@ -56,18 +60,33 @@ function BookingPage() {
     }));
   };
 
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+    setFormData(prev => ({
+      ...prev,
+      date: date,
+      time: '' // Reset time when date changes
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
+      // Préparer les données avec la date au format string
+      const reservationData = {
+        ...formData,
+        date: formData.date.toISOString().split('T')[0]
+      };
+
       const response = await fetch('http://127.0.0.1:8000/api/reservations/create/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(reservationData)
       });
 
       if (response.ok) {
@@ -92,7 +111,18 @@ function BookingPage() {
   };
 
   // Date minimum = aujourd'hui
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date();
+  const maxDate = new Date();
+  maxDate.setMonth(maxDate.getMonth() + 3); // 3 mois à l'avance
+
+  // Fonction pour désactiver les dates passées
+  const tileDisabled = ({ date, view }) => {
+    if (view === 'month') {
+      // Désactiver les dates passées
+      return date < today.setHours(0, 0, 0, 0);
+    }
+    return false;
+  };
 
   return (
     <div className="booking-page">
@@ -160,36 +190,47 @@ function BookingPage() {
               <div className="form-section">
                 <h3>Détails de votre réservation</h3>
                 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="date">Date *</label>
-                    <input
-                      type="date"
-                      id="date"
-                      name="date"
-                      value={formData.date}
-                      onChange={handleInputChange}
-                      min={today}
-                      required
+                {/* Calendrier */}
+                <div className="form-group">
+                  <label>Choisissez une date *</label>
+                  <div className="calendar-container">
+                    <Calendar
+                      onChange={handleDateChange}
+                      value={selectedDate}
+                      minDate={today}
+                      maxDate={maxDate}
+                      tileDisabled={tileDisabled}
+                      locale="fr-FR"
+                      className="booking-calendar"
                     />
                   </div>
+                  {selectedDate && (
+                    <p className="selected-date">
+                      Date sélectionnée : {selectedDate.toLocaleDateString('fr-FR', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </p>
+                  )}
+                </div>
 
-                  <div className="form-group">
-                    <label htmlFor="number_of_guests">Nombre de personnes *</label>
-                    <select
-                      id="number_of_guests"
-                      name="number_of_guests"
-                      value={formData.number_of_guests}
-                      onChange={handleInputChange}
-                      required
-                    >
-                      {[1,2,3,4,5,6,7,8,9,10].map(num => (
-                        <option key={num} value={num}>
-                          {num} personne{num > 1 ? 's' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <div className="form-group">
+                  <label htmlFor="number_of_guests">Nombre de personnes *</label>
+                  <select
+                    id="number_of_guests"
+                    name="number_of_guests"
+                    value={formData.number_of_guests}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    {[1,2,3,4,5,6,7,8,9,10].map(num => (
+                      <option key={num} value={num}>
+                        {num} personne{num > 1 ? 's' : ''}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Créneaux horaires */}
