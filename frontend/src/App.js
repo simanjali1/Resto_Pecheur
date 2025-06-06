@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import BookingPage from './pages/BookingPage';
 import ConfirmationPage from './pages/ConfirmationPage';
 import MenuPage from './pages/MenuPage';
+import TestConnection from './components/TestConnection';
 import './App.css';
 
 function App() {
@@ -15,6 +16,8 @@ function App() {
           <Route path="/reservation" element={<BookingPage />} />
           <Route path="/confirmation" element={<ConfirmationPage />} />
           <Route path="/menu" element={<MenuPage />} />
+          {/* Route temporaire pour tester la connexion API */}
+          <Route path="/test-connection" element={<TestConnection />} />
         </Routes>
       </div>
     </Router>
