@@ -3,109 +3,170 @@ import { Link } from 'react-router-dom';
 import menuData from '../Data/menu.json';
 import './MenuPage.css';
 
+// Import all category images with correct lowercase .jpeg filenames
+import boissonsImg from '../assets/images/Category_pics/boissons.jpeg';
+import burgersImg from '../assets/images/Category_pics/burgers.jpeg';
+import dessertsImg from '../assets/images/Category_pics/desserts.jpeg';
+import entreesChaudesImg from '../assets/images/Category_pics/entrees-chaudes.jpeg';
+import entreesFromdesImg from '../assets/images/Category_pics/entrees-froides.jpeg';
+import jusImg from '../assets/images/Category_pics/jus.jpeg';
+import jusBioImg from '../assets/images/Category_pics/jus-bio-naturelle.jpeg';
+import lasagnesImg from '../assets/images/Category_pics/Lasagnes.jpeg';
+import patesImg from '../assets/images/Category_pics/Les-Pates.jpeg';
+import platsImg from '../assets/images/Category_pics/Les-Plats.jpeg';
+import omelettesImg from '../assets/images/Category_pics/Omelettes.jpeg';
+import paellaImg from '../assets/images/Category_pics/Paella.jpeg';
+import paninisImg from '../assets/images/Category_pics/Paninis.jpeg';
+import planchaImg from '../assets/images/Category_pics/Plancha.jpeg';
+import platCremeImg from '../assets/images/Category_pics/plat-creme.jpeg';
+import poissonFritureImg from '../assets/images/Category_pics/Poisson-Friture.jpeg';
+import pouletImg from '../assets/images/Category_pics/Poulet-grille-au-four.jpeg';
+import sandwichesImg from '../assets/images/Category_pics/Sandwiches.jpeg';
+import tajinesImg from '../assets/images/Category_pics/Tajine-de-poisson.jpeg';
+
+  // Images et informations pour chaque catégorie - using imported images from src
+ const categoryImages = {
+    'entrees-froides': {
+      image: entreesFromdesImg,
+      color: '#27ae60',
+      nameFr: 'Entrées Froides',
+      nameAr: 'المقبلات الباردة',
+      description: 'Salades fraîches et entrées froides'
+    },
+    'entrees-chaudes': {
+      image: entreesChaudesImg,
+      color: '#e74c3c',
+      nameFr: 'Entrées Chaudes',
+      nameAr: 'المقبلات الساخنة',
+      description: 'Soupes et entrées chaudes'
+    },
+    'pates': {
+      image: patesImg,
+      color: '#f39c12',
+      nameFr: 'Les Pâtes',
+      nameAr: 'المعكرونة',
+      description: 'Spaghetti et tagliatelles'
+    },
+    'lasagnes': {
+      image: lasagnesImg,
+      color: '#d35400',
+      nameFr: 'Lasagnes',
+      nameAr: 'اللازانيا',
+      description: 'Lasagnes au four'
+    },
+    'omelettes': {
+      image: omelettesImg,
+      color: '#f1c40f',
+      nameFr: 'Omelettes',
+      nameAr: 'العجة',
+      description: 'Omelettes variées'
+    },
+    'sandwiches': {
+      image: sandwichesImg,
+      color: '#3498db',
+      nameFr: 'Sandwiches',
+      nameAr: 'السندويشات',
+      description: 'Sandwiches et wraps'
+    },
+    'paninis': {
+      image: paninisImg,
+      color: '#95a5a6',
+      nameFr: 'Paninis',
+      nameAr: 'البانيني',
+      description: 'Paninis grillés'
+    },
+    'burgers': {
+      image: burgersImg,
+      color: '#e67e22',
+      nameFr: 'Burgers',
+      nameAr: 'البرجر',
+      description: 'Burgers et steaks'
+    },
+    'poulet': {
+      image: pouletImg,
+      color: '#f39c12',
+      nameFr: 'Poulet',
+      nameAr: 'الدجاج',
+      description: 'Poulet grillé au four'
+    },
+    'plats': {
+      image: platsImg,
+      color: '#c0392b',
+      nameFr: 'Les Plats',
+      nameAr: 'الأطباق الرئيسية',
+      description: 'Brochettes et plats chauds'
+    },
+    'poisson-friture': {
+      image: poissonFritureImg,
+      color: '#3498db',
+      nameFr: 'Poisson Friture',
+      nameAr: 'السمك المقلي',
+      description: 'Poissons frits et fruits de mer'
+    },
+    'plancha': {
+      image: planchaImg,
+      color: '#16a085',
+      nameFr: 'Plancha',
+      nameAr: 'البلانشا',
+      description: 'Grillades à la plancha'
+    },
+    'plat-creme': {
+      image: platCremeImg,
+      color: '#f8f9fa',
+      nameFr: 'Plat Crème',
+      nameAr: 'أطباق بالكريمة',
+      description: 'Poissons à la crème'
+    },
+    'tajines': {
+      image: tajinesImg,
+      color: '#e74c3c',
+      nameFr: 'Tajines',
+      nameAr: 'الطاجين',
+      description: 'Tajines traditionnels'
+    },
+    'paella': {
+      image: paellaImg,
+      color: '#f39c12',
+      nameFr: 'Paëlla',
+      nameAr: 'البايلا',
+      description: 'Paëllas valenciennes'
+    },
+    'desserts': {
+      image: dessertsImg,
+      color: '#e91e63',
+      nameFr: 'Desserts',
+      nameAr: 'الحلويات',
+      description: 'Desserts et sucreries'
+    },
+    'boissons': {
+      image: boissonsImg,
+      color: '#795548',
+      nameFr: 'Boissons',
+      nameAr: 'المشروبات',
+      description: 'Thés, sodas et eau'
+    },
+    'jus': {
+      image: jusImg,
+      color: '#ff9800',
+      nameFr: 'Jus',
+      nameAr: 'العصائر',
+      description: 'Jus de fruits frais'
+    },
+    'jus-bio': {
+      image: jusBioImg,
+      color: '#4caf50',
+      nameFr: 'Jus Bio',
+      nameAr: 'العصائر الطبيعية',
+      description: 'Jus bio et naturels'
+    }
+  };
+
 function MenuPage() {
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   const categories = Object.keys(menuData.categories);
 
-  // Images et icônes pour chaque catégorie
-  const categoryImages = {
-    'entrees-froides': {
-      icon: '🥗',
-      color: '#27ae60',
-      description: 'Salades fraîches et entrées froides'
-    },
-    'entrees-chaudes': {
-      icon: '🍲',
-      color: '#e74c3c',
-      description: 'Soupes et entrées chaudes'
-    },
-    'pates': {
-      icon: '🍝',
-      color: '#f39c12',
-      description: 'Spaghetti et tagliatelles'
-    },
-    'lasagnes': {
-      icon: '🧀',
-      color: '#d35400',
-      description: 'Lasagnes au four'
-    },
-    'omelettes': {
-      icon: '🥚',
-      color: '#f1c40f',
-      description: 'Omelettes variées'
-    },
-    'sandwiches': {
-      icon: '🥪',
-      color: '#3498db',
-      description: 'Sandwiches et wraps'
-    },
-    'paninis': {
-      icon: '🍞',
-      color: '#95a5a6',
-      description: 'Paninis grillés'
-    },
-    'burgers': {
-      icon: '🍔',
-      color: '#e67e22',
-      description: 'Burgers et steaks'
-    },
-    'poulet': {
-      icon: '🍗',
-      color: '#f39c12',
-      description: 'Poulet grillé au four'
-    },
-    'plats': {
-      icon: '🍖',
-      color: '#c0392b',
-      description: 'Brochettes et plats chauds'
-    },
-    'poisson-friture': {
-      icon: '🍤',
-      color: '#3498db',
-      description: 'Poissons frits et fruits de mer'
-    },
-    'plancha': {
-      icon: '🐟',
-      color: '#16a085',
-      description: 'Grillades à la plancha'
-    },
-    'plat-creme': {
-      icon: '🐠',
-      color: '#f8f9fa',
-      description: 'Poissons à la crème'
-    },
-    'tajines': {
-      icon: '🥘',
-      color: '#e74c3c',
-      description: 'Tajines traditionnels'
-    },
-    'paella': {
-      icon: '🥙',
-      color: '#f39c12',
-      description: 'Paëllas valenciennes'
-    },
-    'desserts': {
-      icon: '🍰',
-      color: '#e91e63',
-      description: 'Desserts et sucreries'
-    },
-    'boissons': {
-      icon: '☕',
-      color: '#795548',
-      description: 'Thés, sodas et eau'
-    },
-    'jus': {
-      icon: '🧃',
-      color: '#ff9800',
-      description: 'Jus de fruits frais'
-    },
-    'jus-bio': {
-      icon: '🥕',
-      color: '#4caf50',
-      description: 'Jus bio et naturels'
-    }
-  };
+
 
   const handleCategoryClick = (categoryKey) => {
     setSelectedCategory(categoryKey);
@@ -144,19 +205,20 @@ function MenuPage() {
                       key={categoryKey}
                       className="category-card"
                       onClick={() => handleCategoryClick(categoryKey)}
-                      style={{ borderColor: categoryInfo.color }}
+                      style={{ 
+                        borderColor: '#e74c3c',
+                        backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.4)), url(${categoryInfo.image})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat'
+                      }}
                     >
-                      <div 
-                        className="category-icon"
-                        style={{ backgroundColor: categoryInfo.color }}
-                      >
-                        {categoryInfo.icon}
-                      </div>
-                      <h3 className="category-title">{category.title}</h3>
-                      <p className="category-description">{categoryInfo.description}</p>
+                      <h3 className="category-title-fr">{categoryInfo.nameFr}</h3>
+                      <h4 className="category-title-ar">{categoryInfo.nameAr}</h4>
                       <div className="category-count">
                         {category.items.length} plat{category.items.length > 1 ? 's' : ''}
                       </div>
+                      <p className="category-description">{categoryInfo.description}</p>
                       <div className="category-price-range">
                         {Math.min(...category.items.map(item => item.price))} - {Math.max(...category.items.map(item => item.price))} DH
                       </div>
@@ -177,7 +239,11 @@ function MenuPage() {
                     className="category-icon-large"
                     style={{ backgroundColor: categoryImages[selectedCategory].color }}
                   >
-                    {categoryImages[selectedCategory].icon}
+                    <img 
+                      src={categoryImages[selectedCategory].image} 
+                      alt={categoryImages[selectedCategory].nameFr}
+                      className="category-image-large"
+                    />
                   </span>
                   <div>
                     <h2>{menuData.categories[selectedCategory].title}</h2>
