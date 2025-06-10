@@ -166,8 +166,6 @@ function MenuPage() {
 
   const categories = Object.keys(menuData.categories);
 
-
-
   const handleCategoryClick = (categoryKey) => {
     setSelectedCategory(categoryKey);
   };
@@ -255,13 +253,19 @@ function MenuPage() {
               <div className="dishes-grid">
                 {menuData.categories[selectedCategory].items.map((item, index) => (
                   <div key={index} className="dish-card">
-                    <div className="dish-info">
+                    <div className="dish-header">
                       <h3 className="dish-name">{item.name}</h3>
                       <div className="dish-price">{item.price} DH</div>
                     </div>
-                    <div className="dish-actions">
-                      <span className="dish-category">{menuData.categories[selectedCategory].title}</span>
-                    </div>
+                    
+                    {/* Description/Ingredients */}
+                    {item.description && (
+                      <div className="dish-description">
+                        <p className="ingredients">
+                          {item.description}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -285,7 +289,7 @@ function MenuPage() {
       <footer className="menu-footer">
         <div className="container">
           <p>📞 +212 528 86 25 47 | 📍 M7RG+RJ3, Bd Mohamed Hafidi, Tiznit</p>
-          <p>&copy; 2025 Resto Pêcheur - Tous les prix sont en Dirhams (DH)</p>
+          <p>&copy; 2025 Resto Pêcheur - Tous les prix sont en Dirhams (DH) - 100% Halal</p>
         </div>
       </footer>
     </div>
