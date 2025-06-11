@@ -26,33 +26,37 @@ function HomePage() {
 
   return (
     <div className="homepage">
+      {/* Navigation Header */}
+      <nav className="top-navigation">
+        <div className="nav-container">
+          <div className="nav-links">
+            <a href="#home" className="nav-link">Home</a>
+            <a href="#about" className="nav-link">À propos</a>
+            <Link to="/menu" className="nav-link">Voir le menu</Link>
+            <Link to="/reservation" className="nav-link">Réserver</Link>
+          </div>
+        </div>
+      </nav>
+
       {/* Header */}
-      <header className="hero-section">
+      <header id="home" className="hero-section">
+        <div className="hero-background"></div>
         <div className="hero-overlay">
           <div className="hero-content">
             <h1 className="restaurant-name">
-              {restaurant?.name || 'Resto Pêcheur'}
+              Resto Pêcheur
             </h1>
-            <p className="restaurant-tagline">
-              Restaurant de poissons et fruits de mer frais
-            </p>
-            <p className="restaurant-location">
-              Boulevard Mohamed Hafidi, Tiznit • Cuisine authentique
-            </p>
-            <div className="hero-buttons">
-              <Link to="/reservation" className="cta-button">
-                Réserver une table
-              </Link>
-              <Link to="/menu" className="cta-button secondary">
-                Voir le menu
-              </Link>
+            
+            <div className="main-hook">
+              <h2 className="hook-text-fr">De l'océan à votre assiette</h2>
+              <h3 className="hook-text-ar">من المحيط إلى طبقكم</h3>
             </div>
           </div>
         </div>
       </header>
 
       {/* Section Présentation */}
-      <section className="about-section">
+      <section id="about" className="about-section">
         <div className="container">
           <div className="about-content">
             <div className="about-text">
