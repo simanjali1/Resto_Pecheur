@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './HomePage.css';
+import logo from '../assets/images/mainPicture/logo.png';
 
 function HomePage() {
   const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState('home');
 
   useEffect(() => {
     // Récupérer les infos du restaurant depuis l'API Django
@@ -20,6 +22,45 @@ function HomePage() {
       });
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ['home', 'about'];
+      const scrollPosition = window.scrollY + 200; // Offset for better detection
+
+      for (let section of sections) {
+        const element = document.getElementById(section);
+        if (element) {
+          const offsetTop = element.offsetTop;
+          const offsetHeight = element.offsetHeight;
+          
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveSection(section);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    // Call once to set initial active section
+    handleScroll();
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Handle navigation click
+  const handleNavClick = (section) => {
+    setActiveSection(section);
+    
+    if (section === 'home' || section === 'about') {
+      // Smooth scroll to section
+      const element = document.getElementById(section);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   if (loading) {
     return <div className="loading">Chargement...</div>;
   }
@@ -29,18 +70,54 @@ function HomePage() {
       {/* Navigation Header */}
       <nav className="top-navigation">
         <div className="nav-container">
+          <div className="nav-logo">
+            <img src={logo} alt="Resto Pêcheur" />
+          </div>
+          
           <div className="nav-links">
-            <a href="#home" className="nav-link">Home</a>
-            <a href="#about" className="nav-link">À propos</a>
-            <Link to="/menu" className="nav-link">Voir le menu</Link>
-            <Link to="/reservation" className="nav-link">Réserver</Link>
+            <a 
+              href="#home" 
+              className={`nav-link ${activeSection === 'home' ? 'active' : ''}`}
+              onClick={(e) => {
+                e.preventDefault();
+                handleNavClick('home');
+              }}
+            >
+              Accueil
+            </a>
+            <a 
+              href="#about" 
+              className={`nav-link ${activeSection === 'about' ? 'active' : ''}`}
+              onClick={(e) => {
+                e.preventDefault();
+                handleNavClick('about');
+              }}
+            >
+              À propos
+            </a>
+            <Link 
+              to="/menu" 
+              className={`nav-link ${activeSection === 'menu' ? 'active' : ''}`}
+              onClick={() => handleNavClick('menu')}
+            >
+              Menu
+            </Link>
+            <Link 
+              to="/reservation" 
+              className={`nav-link nav-cta ${activeSection === 'reservation' ? 'active' : ''}`}
+              onClick={() => handleNavClick('reservation')}
+            >
+              Réservation
+            </Link>
           </div>
         </div>
       </nav>
 
       {/* Header */}
       <header id="home" className="hero-section">
-        <div className="hero-background"></div>
+        <div className="hero-background-wrapper">
+          <div className="hero-background"></div>
+        </div>
         <div className="hero-overlay">
           <div className="hero-content">
             <h1 className="restaurant-name">

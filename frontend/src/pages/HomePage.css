@@ -1,5 +1,7 @@
 /* HomePage.css */
 
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap" rel="stylesheet');
+
 * {
   margin: 0;
   padding: 0;
@@ -16,68 +18,163 @@ body {
   min-height: 100vh;
 }
 
-/* Top Navigation */
+/* Top Navigation - Transparent Background */
 .top-navigation {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
   z-index: 1000;
-  padding: 1.5rem 0;
+  padding: 2rem 0;
 }
 
 .nav-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 0 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
 }
 
+/* Logo container */
+.nav-logo {
+  position: absolute;
+  left: -2rem;
+  top: 1;
+  z-index: 10;
+  height: 140%;
+  display: flex;
+  align-items: center;
+  padding-left: 1rem;
+}
+
+.nav-logo img {
+  height: 270px;
+  width: auto;
+  max-width: 100%;
+}
+
+/* Navigation links positioned to the right */
 .nav-links {
   display: flex;
-  justify-content: center;
-  gap: 4rem;
+  justify-content: flex-end;
+  gap: 1.5rem;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  margin-left: auto;
+  margin-right: -8rem; 
 }
 
 .nav-link {
-  color: rgba(255, 255, 255, 0.9);
+  color: #cb5103;
   text-decoration: none;
   font-size: 1.1rem;
-  font-weight: 300;
-  padding: 0.8rem 1.5rem;
-  border-radius: 30px;
-  transition: all 0.4s ease;
+  font-weight: 600;
+  font-family: 'Handelson One';
+  padding: 0.6rem 1.2rem;
+  border-radius: 25px;
+  transition: all 0.3s ease;
   text-transform: capitalize;
   letter-spacing: 0.5px;
   position: relative;
   border: 1px solid transparent;
+  cursor: pointer;
+  user-select: none;
 }
 
-.nav-link::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-  border-radius: 30px;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  z-index: -1;
-}
-
+/* Hover state */
 .nav-link:hover {
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-3px);
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  color: #ff6b35;
+  border-color: rgba(255, 107, 53, 0.3);
+  background: rgba(255, 107, 53, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.nav-link:hover::before {
-  opacity: 1;
+/* Active state */
+.nav-link.active {
+  color: #cb5103;
+  font-weight: 600;
+  background: rgba(255, 107, 53, 0.1);
+  border-color: rgba(255, 107, 53, 0.3);
+}
+
+/* CTA Button (Reservation) - same as other links */
+.nav-cta {
+  margin-left: 1rem;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .top-navigation {
+    padding: 0.8rem 0;
+  }
+
+  .hero-section {
+    margin-top: 140px;
+  }
+
+  .nav-container {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0 1rem;
+    position: relative;
+  }
+
+  .nav-logo {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    order: 1;
+    align-self: center;
+  }
+
+  .nav-logo img {
+    height: 65px;
+  }
+
+  .nav-links {
+    order: 2;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-left: 0;
+  }
+
+  .nav-link {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+  }
+
+  .nav-cta {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    margin-top: 160px;
+  }
+
+  .nav-links {
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .nav-link {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  .nav-logo img {
+    height: 55px;
+    max-width: 180px;
+  }
 }
 
 /* Hero Section */
@@ -88,19 +185,102 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  margin-top: 0px;
 }
 
 .hero-background {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url('../assets/images/mainPicture/restauImage.png');
+  width: 110%;
+  height: 110%;
+  background-image: url('../assets/images/mainPicture/Imageresto.jpeg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   z-index: 1;
+  animation: kenBurns 20s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+.hero-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    circle at 30% 70%,
+    rgba(255, 107, 53, 0.1) 0%,
+    transparent 40%
+  ),
+  radial-gradient(
+    circle at 70% 30%,
+    rgba(21, 43, 103, 0.1) 0%,
+    transparent 40%
+  );
+  animation: colorWave 15s ease-in-out infinite;
+  z-index: 2;
+}
+
+.hero-background::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    transparent 25%,
+    transparent 75%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  animation: kenBurns 5s ease-in-out infinite;
+  z-index: 3;
+}
+
+@keyframes kenBurns {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+}
+
+@keyframes colorWave {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1) rotate(0deg);
+  }
+  33% {
+    opacity: 0.5;
+    transform: scale(1.1) rotate(120deg);
+  }
+  66% {
+    opacity: 0.4;
+    transform: scale(0.9) rotate(240deg);
+  }
+}
+
+@keyframes lightSweep {
+  0% {
+    transform: translateX(-100%) skewX(-20deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(100%) skewX(-20deg);
+    opacity: 0;
+  }
 }
 
 .hero-overlay {
@@ -109,17 +289,35 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.6);
   background: linear-gradient(
     135deg,
-    rgba(0, 0, 0, 0.7) 0%,
-    rgba(0, 0, 0, 0.5) 50%,
-    rgba(0, 0, 0, 0.7) 100%
+    rgba(0, 0, 0, 0.6) 0%,
+    rgba(0, 0, 0, 0.4) 50%,
+    rgba(0, 0, 0, 0.6) 100%
   );
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+@keyframes breathe {
+  0%, 100% {
+    background: linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.7) 0%,
+      rgba(0, 0, 0, 0.5) 50%,
+      rgba(0, 0, 0, 0.7) 100%
+    );
+  }
+  50% {
+    background: linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.6) 0%,
+      rgba(0, 0, 0, 0.4) 50%,
+      rgba(0, 0, 0, 0.6) 100%
+    );
+  }
 }
 
 .hero-content {
@@ -132,98 +330,30 @@ body {
 }
 
 .restaurant-name {
-  font-size: 4.5rem;
+  font-family: 'Montserrat', 'Arial', sans-serif; /* Modern sans-serif */
+  font-size: 5rem;
+  color: #cb5103;
+  text-align: center;
+  margin-top: 2rem;
   font-weight: 800;
-  margin-bottom: 2rem;
   letter-spacing: 3px;
-  position: relative;
-  font-family: 'Playfair Display', 'Georgia', serif;
-  background: linear-gradient(
-    45deg,
-    #e43a14 0%,
-    #f8f9fa 20%,
-    #ff7b00 40%,
-    #a1dcf8 60%,
-    #239fcf 80%,
-    #152b67 100%
-  );
-  background-size: 300% 300%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: gradientShift 4s ease-in-out infinite;
-  text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
-  filter: drop-shadow(2px 4px 8px rgba(0, 0, 0, 0.7));
-}
-
-.restaurant-name::before {
-  content: '';
-  position: absolute;
-  top: -20px;
-  left: -20px;
-  right: -20px;
-  bottom: -20px;
-  background: radial-gradient(
-    circle at center,
-    rgba(255, 215, 0, 0.1) 0%,
-    transparent 70%
-  );
-  border-radius: 50px;
-  z-index: -1;
-  animation: pulse 3s ease-in-out infinite;
-}
-
-.restaurant-name::after {
-  content: '✨';
-  position: absolute;
-  top: -30px;
-  right: -40px;
-  font-size: 2rem;
-  animation: sparkle 2s ease-in-out infinite;
-  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8));
-}
-
-@keyframes gradientShift {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.3;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.1;
-  }
-}
-
-@keyframes sparkle {
-  0%, 100% {
-    transform: scale(1) rotate(0deg);
-    opacity: 0.7;
-  }
-  50% {
-    transform: scale(1.2) rotate(180deg);
-    opacity: 1;
-  }
+  text-shadow: 3px 6px 12px rgba(0, 0, 0, 0.8);
+  transform: rotate(-1deg);
 }
 
 .main-hook {
-  margin-bottom: 3rem;
+  margin-top: 6rem;
+  margin-bottom: 2rem;
   position: relative;
+  line-height: 1;
 }
 
 .hook-text-fr {
-  font-size: 2.5rem;
+  font-family: 'Great Vibes', cursive;
+  font-size: 2rem;
   font-weight: 300;
   color: #ffffff;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
   letter-spacing: 1px;
   font-style: italic;
   margin: 0 0 1rem 0;
@@ -231,11 +361,12 @@ body {
 }
 
 .hook-text-ar {
+  font-family: 'Caveat', cursive;
   font-size: 2rem;
-  font-weight: 400;
-  color: #ffd700;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-  font-family: 'Arabic UI Text', 'Tahoma', sans-serif;
+  font-weight: 300;
+  color: #ffffff;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
+  font-style: italic;
   direction: rtl;
   margin: 0;
   text-align: center;
@@ -482,21 +613,12 @@ body {
     font-size: 1.5rem;
   }
 
-  .hook-text {
-    font-size: 2rem;
+  .hook-text-fr {
+    font-size: 1.8rem;
   }
 
-  .hook-text::before,
-  .hook-text::after {
-    display: none;
-  }
-
-  .welcome-messages p {
-    font-size: 1.1rem;
-  }
-
-  .welcome-french {
-    font-size: 1.2rem;
+  .hook-text-ar {
+    font-size: 1.5rem;
   }
 
   .hero-buttons {
@@ -540,7 +662,7 @@ body {
 
   .restaurant-name {
     font-size: 2.2rem;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
   }
 
   .restaurant-name::after {
@@ -549,21 +671,12 @@ body {
     font-size: 1.2rem;
   }
 
-  .hook-text {
+  .hook-text-fr {
     font-size: 1.5rem;
   }
 
-  .welcome-messages {
-    padding: 1rem;
-  }
-
-  .welcome-messages p {
-    font-size: 1rem;
-    margin: 0.5rem 0;
-  }
-
-  .restaurant-tagline {
-    font-size: 1.1rem;
+  .hook-text-ar {
+    font-size: 1.2rem;
   }
 
   .about-text h2 {
