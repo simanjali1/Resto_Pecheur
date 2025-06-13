@@ -43,9 +43,9 @@ body {
 .nav-logo {
   position: absolute;
   left: -2rem;
-  top: 1;
+  top: -30px;
   z-index: 10;
-  height: 140%;
+  height: 120%;
   display: flex;
   align-items: center;
   padding-left: 1rem;
@@ -194,13 +194,14 @@ body {
   left: 0;
   width: 110%;
   height: 110%;
-  background-image: url('../assets/images/mainPicture/Imageresto.jpeg');
+  background-image: url('../assets/images/mainPicture/Imagerest.jpeg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   z-index: 1;
   animation: kenBurns 20s ease-in-out infinite;
   transform-origin: center center;
+  filter: blur(2.7px);
 }
 
 .hero-background::before {
@@ -290,11 +291,12 @@ body {
   width: 100%;
   height: 100%;
   background: linear-gradient(
-    135deg,
-    rgba(0, 0, 0, 0.6) 0%,
-    rgba(0, 0, 0, 0.4) 50%,
-    rgba(0, 0, 0, 0.6) 100%
-  );
+  to bottom,
+  rgba(255, 255, 255, 1) 0%,
+  rgba(255, 255, 255, 0.4) 40%,
+  rgba(255, 255, 255, 0) 60%,
+  transparent 100%
+);
   z-index: 2;
   display: flex;
   align-items: center;
@@ -330,17 +332,27 @@ body {
 }
 
 .restaurant-name {
-  font-family: 'Montserrat', 'Arial', sans-serif; /* Modern sans-serif */
-  font-size: 5rem;
-  color: #cb5103;
+  font-family: 'Pacifico', cursive;
+  font-size: 6rem;
+  color: #cb5003;
   text-align: center;
   margin-top: 2rem;
   font-weight: 800;
   letter-spacing: 3px;
-  text-shadow: 3px 6px 12px rgba(0, 0, 0, 0.8);
+  position: relative; 
   transform: rotate(-1deg);
 }
-
+.restaurant-name::after {
+  content: '';
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #cb5003, transparent);
+  animation: waveFlow 4s ease-in-out infinite;
+}
 .main-hook {
   margin-top: 6rem;
   margin-bottom: 2rem;
@@ -348,9 +360,14 @@ body {
   line-height: 1;
 }
 
+@keyframes waveFlow {
+  0%, 100% { width: 100px; opacity: 0.6; }
+  50% { width: 300px; opacity: 1; }
+}
+
 .hook-text-fr {
   font-family: 'Great Vibes', cursive;
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 300;
   color: #ffffff;
   text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
@@ -362,7 +379,7 @@ body {
 
 .hook-text-ar {
   font-family: 'Caveat', cursive;
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 300;
   color: #ffffff;
   text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
