@@ -149,7 +149,7 @@ function HomePage() {
             </div>
             <div className="about-image">
               <div className="image-placeholder">
-                <span>🐟 Photo du restaurant</span>
+                <span>🐟 poissons </span>
               </div>
             </div>
           </div>

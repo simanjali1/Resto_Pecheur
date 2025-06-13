@@ -52,7 +52,7 @@ body {
 }
 
 .nav-logo img {
-  height: 270px;
+  height: 250px;
   width: auto;
   max-width: 100%;
 }
@@ -67,6 +67,7 @@ body {
   align-items: center;
   margin-left: auto;
   margin-right: -8rem; 
+  margin-top: -10px; 
 }
 
 .nav-link {
@@ -461,10 +462,11 @@ body {
 }
 
 .about-text h2 {
-  font-size: 2.5rem;
-  color: #333;
+  font-family: 'Pacifico', cursive;
+  font-size: 2rem;
+  color: #333354d0;
   margin-bottom: 1.5rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .about-text p {
@@ -513,7 +515,7 @@ body {
 
 .info-card h3 {
   font-size: 1.5rem;
-  color: #333;
+  color: #333354d0;
   margin-bottom: 1rem;
 }
 
@@ -530,8 +532,9 @@ body {
 
 .specialties-section h2 {
   text-align: center;
+  font-family: 'Pacifico', cursive;
   font-size: 2.5rem;
-  color: #333;
+  color: #333354d0;
   margin-bottom: 3rem;
   font-weight: 700;
 }
@@ -577,7 +580,7 @@ body {
 /* CTA Section */
 .cta-section {
   padding: 5rem 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ddd1a6 0%, #cb5003 100%);
   text-align: center;
   color: white;
 }
@@ -608,7 +611,7 @@ body {
 
 /* Footer */
 .footer {
-  background: #333;
+  background: #333354;
   color: white;
   text-align: center;
   padding: 2rem 0;
