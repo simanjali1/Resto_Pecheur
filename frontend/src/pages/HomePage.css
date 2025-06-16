@@ -533,10 +533,10 @@ body {
 .specialties-section h2 {
   text-align: center;
   font-family: 'Pacifico', cursive;
-  font-size: 2.5rem;
+  font-size: 2rem;
   color: #333354d0;
   margin-bottom: 3rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .specialties-grid {
@@ -580,7 +580,7 @@ body {
 /* CTA Section */
 .cta-section {
   padding: 5rem 0;
-  background: linear-gradient(135deg, #ddd1a6 0%, #cb5003 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #cb5003 100%);
   text-align: center;
   color: white;
 }
