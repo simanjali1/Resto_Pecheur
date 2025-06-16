@@ -32,6 +32,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',  # Modern admin theme
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -131,6 +132,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -151,3 +153,110 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+
+# Static files configuration (make sure this exists)
+STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+# Complete Jazzmin Configuration with Your Logo
+JAZZMIN_SETTINGS = {
+    "site_title": "Resto Pêcheur Admin",
+    "site_header": "Resto Pêcheur",
+    "site_brand": "Resto Pêcheur",
+    "site_logo": "admin/img/logo.png",  # ← Your octopus logo!
+    "login_logo": "admin/img/logo.png",  # ← Logo on login page too
+    "site_logo_classes": "img-circle elevation-3",
+    "welcome_sign": "De l'océan à votre assiette - Administration",
+    "copyright": "Resto Pêcheur 2025 - من المحيط إلى طبقكم",
+    
+    # Ocean theme
+    "theme": "cerulean",
+    "dark_mode_theme": None,
+    
+    # Custom ocean styling
+    "custom_css": "admin/css/theme.css", 
+    "custom_js": None,
+    
+    # Navigation with ocean emojis
+    "topmenu_links": [
+        {"name": "🏠 Accueil", "url": "admin:index"},
+        {"name": "🌊 Site Web", "url": "/", "new_window": True},
+        {"name": "🐟 Réservations", "url": "/admin/reservations/reservation/"},
+    ],
+    
+    "usermenu_links": [
+        {"name": "Voir le site", "url": "/", "new_window": True},
+    ],
+    
+    # Menu ordering
+    "order_with_respect_to": ["reservations", "auth"],
+    
+    # Ocean-themed icons
+    "icons": {
+        "auth": "fas fa-anchor",
+        "auth.user": "fas fa-user-tie", 
+        "reservations.Reservation": "fas fa-fish",
+        "reservations.TimeSlot": "fas fa-clock",
+        "reservations.SpecialDate": "fas fa-calendar-alt",
+    },
+    
+    "default_icon_parents": "fas fa-waves",
+    "default_icon_children": "fas fa-circle",
+    
+    "related_modal_active": False,
+    
+    # Hide unnecessary models for single restaurant
+    "hide_apps": [],
+    "hide_models": [
+        "reservations.Restaurant",  # You only have one restaurant
+        "auth.Group",               # Single admin, no groups needed
+    ],
+    
+    "show_sidebar": True,
+    "navigation_expanded": True,
+    "changeform_format": "horizontal_tabs",
+}
+
+# Ocean-inspired UI tweaks
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    
+    # Ocean colors matching your frontend
+    "brand_colour": "#1e88e5",      # Ocean blue
+    "accent": "accent-info",        # Blue accent
+    "navbar": "navbar-dark",        # Dark like ocean depths
+    "no_navbar_border": False,
+    "navbar_fixed": False,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": False,
+    "sidebar": "sidebar-dark-primary",  # Deep ocean blue
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    
+    "theme": "cerulean",  # Ocean blue theme
+    "dark_mode_theme": None,
+    
+    # Button styling
+    "button_classes": {
+        "primary": "btn-info",      # Ocean blue
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",   # Orange like your frontend
+        "danger": "btn-danger", 
+        "success": "btn-success"
+    },
+    
+    "actions_sticky_top": False,
+}

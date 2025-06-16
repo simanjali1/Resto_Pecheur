@@ -1,0 +1,455 @@
+/* 
+Ocean Theme CSS for Resto Pêcheur Admin
+Matching the frontend design with ocean blues and warm oranges
+*/
+
+/* ===== MAIN COLOR VARIABLES - Matching Frontend ===== */
+:root {
+    --ocean-blue: #1e88e5;
+    --deep-ocean: #0d47a1;
+    --warm-orange: #cb5103;  /* Exact frontend orange */
+    --hover-orange: #ff6b35; /* Frontend hover orange */
+    --light-blue: #e3f2fd;
+    --wave-color: rgba(203, 81, 3, 0.1);  /* Orange wave instead of blue */
+    --seafoam: #4fc3f7;
+    --coral: #ff7043;
+    --transparent-orange: rgba(255, 107, 53, 0.1);
+}
+
+/* ===== HEADER & NAVIGATION - Matching Frontend ===== */
+.main-header .navbar {
+    background: linear-gradient(135deg, rgba(30, 136, 229, 0.95) 0%, var(--deep-ocean) 100%) !important;
+    border-bottom: 3px solid var(--warm-orange);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    color: white !important;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+    text-transform: capitalize;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+    margin: 0 0.2rem;
+}
+
+.navbar-dark .navbar-nav .nav-link:hover {
+    color: var(--warm-orange) !important;
+    border-color: rgba(255, 107, 53, 0.3);
+    background: rgba(255, 107, 53, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Active navigation link */
+.navbar-dark .navbar-nav .nav-link.active {
+    color: var(--warm-orange) !important;
+    background: rgba(255, 107, 53, 0.15);
+    border-color: rgba(255, 107, 53, 0.4);
+}
+
+/* ===== SIDEBAR OCEAN STYLING ===== */
+.main-sidebar {
+    background: linear-gradient(180deg, var(--deep-ocean) 0%, #1565c0 100%) !important;
+    box-shadow: 2px 0 8px rgba(13, 71, 161, 0.2);
+}
+
+.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link {
+    color: #e3f2fd !important;
+    border-radius: 8px;
+    margin: 3px 10px;
+    transition: all 0.3s ease;
+}
+
+.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link:hover {
+    background-color: rgba(255, 111, 0, 0.2) !important;
+    color: white !important;
+    transform: translateX(5px);
+}
+
+.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active {
+    background: linear-gradient(45deg, var(--warm-orange), var(--coral)) !important;
+    color: white !important;
+    border-radius: 8px;
+    margin: 3px 10px;
+    box-shadow: 0 4px 8px rgba(255, 111, 0, 0.4);
+}
+
+/* ===== BRAND/LOGO AREA - Matching Frontend ===== */
+.brand-link {
+    background: linear-gradient(135deg, var(--deep-ocean), var(--ocean-blue)) !important;
+    border-bottom: 3px solid var(--warm-orange);
+    padding: 1rem 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.brand-link:hover {
+    background: linear-gradient(135deg, var(--ocean-blue), var(--seafoam)) !important;
+    transform: scale(1.02);
+}
+
+.brand-image {
+    max-height: 60px !important;
+    width: auto !important;
+    margin-right: 15px;
+    filter: drop-shadow(2px 2px 8px rgba(0,0,0,0.3));
+    transition: all 0.3s ease;
+    border-radius: 50%;
+    border: 2px solid var(--warm-orange);
+    padding: 3px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.brand-link:hover .brand-image {
+    transform: scale(1.1) rotate(5deg);
+    filter: drop-shadow(0 0 15px rgba(255, 111, 0, 0.5));
+}
+
+.brand-text {
+    color: white !important;
+    font-weight: 600;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+    font-size: 1.3rem;
+    font-family: 'Handelson One', serif;
+    letter-spacing: 0.5px;
+}
+
+/* Add glow effect like frontend */
+.brand-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 111, 0, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.brand-link:hover::before {
+    left: 100%;
+}
+
+/* ===== MAIN CONTENT AREA ===== */
+.content-wrapper {
+    background: linear-gradient(135deg, #f8f9fa 0%, var(--light-blue) 100%);
+    min-height: 100vh;
+}
+
+/* ===== CARDS & PANELS ===== */
+.card {
+    border: none;
+    box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(30, 136, 229, 0.25);
+}
+
+.card-header {
+    background: linear-gradient(90deg, var(--light-blue) 0%, white 100%);
+    border-bottom: 2px solid var(--ocean-blue);
+    border-radius: 0 !important;
+    padding: 1rem 1.5rem;
+}
+
+.card-title {
+    color: var(--deep-ocean);
+    font-weight: 600;
+    margin: 0;
+}
+
+/* ===== BUTTONS OCEAN STYLING ===== */
+.btn-info {
+    background: linear-gradient(45deg, var(--ocean-blue), var(--seafoam));
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-info:hover {
+    background: linear-gradient(45deg, var(--deep-ocean), var(--ocean-blue));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(30, 136, 229, 0.4);
+}
+
+.btn-warning {
+    background: linear-gradient(45deg, var(--warm-orange), #ff8f00);
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(45deg, #e65100, var(--warm-orange));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 111, 0, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(45deg, #4caf50, #66bb6a);
+    border: none;
+    border-radius: 8px;
+}
+
+/* ===== TABLE STYLING ===== */
+.table {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.table thead th {
+    background: linear-gradient(90deg, var(--ocean-blue), var(--seafoam));
+    color: white;
+    border: none;
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+.table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: var(--wave-color);
+}
+
+.table tbody tr:hover {
+    background: linear-gradient(90deg, var(--wave-color), rgba(255, 111, 0, 0.1));
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(30, 136, 229, 0.2);
+}
+
+.table tbody td {
+    padding: 0.75rem;
+    border-top: 1px solid rgba(30, 136, 229, 0.1);
+}
+
+/* ===== FORMS & INPUTS ===== */
+.form-control {
+    border: 2px solid #e3f2fd;
+    border-radius: 8px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--ocean-blue);
+    box-shadow: 0 0 0 0.2rem rgba(30, 136, 229, 0.25);
+    transform: translateY(-1px);
+}
+
+/* ===== ALERTS & MESSAGES ===== */
+.alert-success {
+    background: linear-gradient(90deg, #e8f5e8, #c8e6c9);
+    border-left: 4px solid #4caf50;
+    border-radius: 8px;
+    color: #2e7d32;
+}
+
+.alert-info {
+    background: linear-gradient(90deg, var(--light-blue), #e1f5fe);
+    border-left: 4px solid var(--ocean-blue);
+    border-radius: 8px;
+    color: var(--deep-ocean);
+}
+
+.alert-warning {
+    background: linear-gradient(90deg, #fff3e0, #ffe0b2);
+    border-left: 4px solid var(--warm-orange);
+    border-radius: 8px;
+    color: #ef6c00;
+}
+
+/* ===== BREADCRUMBS ===== */
+.breadcrumb {
+    background: transparent;
+    padding: 0.75rem 0;
+    margin-bottom: 1rem;
+}
+
+.breadcrumb-item a {
+    color: var(--ocean-blue);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.breadcrumb-item a:hover {
+    color: var(--warm-orange);
+}
+
+.breadcrumb-item.active {
+    color: var(--deep-ocean);
+    font-weight: 600;
+}
+
+/* ===== FOOTER ===== */
+.main-footer {
+    background: linear-gradient(90deg, var(--deep-ocean), var(--ocean-blue));
+    color: white;
+    border-top: 3px solid var(--warm-orange);
+    padding: 1rem;
+    text-align: center;
+}
+
+.main-footer a {
+    color: var(--warm-orange);
+    text-decoration: none;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes wave {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-3px); }
+}
+
+.nav-icon {
+    animation: wave 4s ease-in-out infinite;
+}
+
+@keyframes ripple {
+    0% { transform: scale(0); opacity: 1; }
+    100% { transform: scale(4); opacity: 0; }
+}
+
+/* ===== SEARCH & FILTERS ===== */
+.form-row .form-group {
+    margin-bottom: 1rem;
+}
+
+#changelist-search input[type="text"] {
+    border: 2px solid var(--light-blue);
+    border-radius: 25px;
+    padding: 0.5rem 1.5rem;
+    width: 300px;
+}
+
+#changelist-search input[type="text"]:focus {
+    border-color: var(--ocean-blue);
+    box-shadow: 0 0 0 0.2rem rgba(30, 136, 229, 0.25);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .main-sidebar {
+        background: var(--deep-ocean) !important;
+    }
+    
+    .brand-image {
+        max-height: 35px !important;
+    }
+    
+    .brand-text {
+        font-size: 1rem;
+    }
+    
+    .card {
+        margin: 0.5rem;
+    }
+}
+
+/* ===== DASHBOARD WIDGETS ===== */
+.info-box {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.info-box-icon {
+    background: linear-gradient(45deg, var(--ocean-blue), var(--seafoam)) !important;
+}
+
+/* ===== CUSTOM SCROLLBAR ===== */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--light-blue);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--ocean-blue);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--deep-ocean);
+}
+
+/* ===== LOGIN PAGE STYLING ===== */
+.login-box {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(30, 136, 229, 0.3);
+}
+
+.login-logo img {
+    max-height: 80px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+}
+
+/* ===== ADDITIONAL OCEAN EFFECTS ===== */
+.content-header {
+    background: transparent;
+}
+
+.content-header h1 {
+    color: var(--deep-ocean);
+    font-weight: 600;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Action buttons styling */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Pagination styling */
+.pagination .page-link {
+    color: var(--ocean-blue);
+    border: 1px solid var(--light-blue);
+    border-radius: 8px;
+    margin: 0 2px;
+}
+
+.pagination .page-link:hover {
+    background-color: var(--light-blue);
+    color: var(--deep-ocean);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--ocean-blue);
+    border-color: var(--ocean-blue);
+}
+
+/* Error messages */
+.alert-danger {
+    background: linear-gradient(90deg, #ffebee, #ffcdd2);
+    border-left: 4px solid #f44336;
+    border-radius: 8px;
+    color: #c62828;
+}

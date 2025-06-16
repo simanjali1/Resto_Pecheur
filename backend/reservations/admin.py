@@ -1,26 +1,7 @@
 from django.contrib import admin
-from .models import Restaurant, Reservation, TimeSlot, SpecialDate
+from .models import Reservation, TimeSlot, SpecialDate
 
-
-@admin.register(Restaurant)
-class RestaurantAdmin(admin.ModelAdmin):
-    list_display = ['name', 'phone', 'capacity', 'opening_time', 'closing_time']
-    fieldsets = (
-        ('Informations générales', {
-            'fields': ('name', 'description', 'address', 'phone', 'email')
-        }),
-        ('Capacité et horaires', {
-            'fields': ('capacity', 'opening_time', 'closing_time')
-        }),
-        ('Jours de fermeture', {
-            'fields': (
-                'closed_on_monday', 'closed_on_tuesday', 'closed_on_wednesday',
-                'closed_on_thursday', 'closed_on_friday', 'closed_on_saturday', 'closed_on_sunday'
-            ),
-            'classes': ('collapse',)  # Section repliable
-        })
-    )
-
+# Restaurant model is intentionally not registered to hide it from admin
 
 @admin.register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
@@ -59,14 +40,12 @@ class ReservationAdmin(admin.ModelAdmin):
         self.message_user(request, f'{updated} réservation(s) annulée(s).')
     mark_as_cancelled.short_description = "Marquer comme annulées"
 
-
 @admin.register(TimeSlot)
 class TimeSlotAdmin(admin.ModelAdmin):
     list_display = ['time', 'max_reservations', 'is_active']
     list_filter = ['is_active']
     list_editable = ['max_reservations', 'is_active']
     ordering = ['time']
-
 
 @admin.register(SpecialDate)
 class SpecialDateAdmin(admin.ModelAdmin):
@@ -83,7 +62,6 @@ class SpecialDateAdmin(admin.ModelAdmin):
             'description': 'Laissez vide si les horaires normaux s\'appliquent'
         })
     )
-
 
 # Configuration générale de l'admin
 admin.site.site_header = "Administration Resto Pêcheur"
