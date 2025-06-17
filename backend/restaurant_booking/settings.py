@@ -162,14 +162,14 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-# Complete Jazzmin Configuration with Your Logo
+# Complete Jazzmin Configuration with Your Logo - UPDATED
 JAZZMIN_SETTINGS = {
     "site_title": "Resto Pêcheur Admin",
     "site_header": "Resto Pêcheur",
     "site_brand": "Resto Pêcheur",
     "site_logo": "admin/img/logo.png",  # ← Your octopus logo!
     "login_logo": "admin/img/logo.png",  # ← Logo on login page too
-    "site_logo_classes": "img-circle elevation-3",
+    "site_logo_classes": "",  # ← REMOVED: "img-circle elevation-3" to prevent circle styling
     "welcome_sign": "De l'océan à votre assiette - Administration",
     "copyright": "Resto Pêcheur 2025 - من المحيط إلى طبقكم",
     
@@ -221,7 +221,7 @@ JAZZMIN_SETTINGS = {
     "changeform_format": "horizontal_tabs",
 }
 
-# Ocean-inspired UI tweaks
+# Ocean-inspired UI tweaks - UPDATED
 JAZZMIN_UI_TWEAKS = {
     "navbar_small_text": False,
     "footer_small_text": False,
