@@ -1,23 +1,34 @@
-"""
-URL configuration for restaurant_booking project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
+# restaurant_booking/urls.py - REDIRECT ALL TO ADMIN WITH SIDEBAR
 from django.contrib import admin
 from django.urls import path, include
+from django.shortcuts import redirect
+from reservations import views
+
+def redirect_to_admin_dashboard(request):
+    """Redirect everything to admin with sidebar"""
+    return redirect('/admin/')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('reservations.urls')),
+    
+    # Redirect ALL dashboard access to admin with sidebar
+    path('dashboard/', redirect_to_admin_dashboard),
+    path('tableau-de-bord/', redirect_to_admin_dashboard),
+    
+    # API endpoints
+    path('api/restaurant/', views.RestaurantDetailView.as_view(), name='restaurant-detail'),
+    path('api/timeslots/', views.TimeSlotListView.as_view(), name='timeslot-list'),
+    path('api/reservations/', views.ReservationListView.as_view(), name='reservation-list'),
+    path('api/reservations/create/', views.ReservationCreateView.as_view(), name='reservation-create'),
+    path('api/reservations/<int:pk>/', views.ReservationDetailView.as_view(), name='reservation-detail'),
+    path('api/check-availability/', views.check_availability, name='check-availability'),
+    path('api/dashboard/stats/', views.dashboard_stats, name='dashboard-stats'),
+    path('api/reservations/<int:reservation_id>/update-status/', views.update_reservation_status, name='update-reservation-status'),
+    
+    # Dashboard API for metrics (keep this for AJAX calls)
+    path('dashboard/api/metrics/', views.dashboard_api_metrics, name='dashboard_api_metrics'),
+    path('dashboard/api/recent/', views.dashboard_api_recent, name='dashboard_api_recent'),
+    
+    # Root redirect to admin dashboard
+    path('', redirect_to_admin_dashboard),
 ]

@@ -354,6 +354,37 @@ Matching the frontend design with ocean blues and warm oranges
     box-shadow: 0 0 0 0.2rem rgba(30, 136, 229, 0.25);
 }
 
+/* ===== MAKE ALL DASHBOARD SECTIONS FULL WIDTH STACKED ===== */
+/* Target the main dashboard container */
+.content-wrapper .content-header + .content {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+    padding: 20px !important;
+}
+
+/* All sections take full width */
+.content-wrapper .content > div {
+    width: 100% !important;
+    max-width: none !important;
+    flex: none !important;
+    margin-bottom: 0 !important;
+}
+
+/* Ensure cards have consistent styling and full width */
+.content-wrapper .content .card {
+    height: 100% !important;
+    min-height: 300px !important;
+    width: 100% !important;
+}
+
+/* Remove any Bootstrap column constraints */
+.content-wrapper .content > div[class*="col"] {
+    width: 100% !important;
+    max-width: none !important;
+    flex: none !important;
+}
+
 /* ===== DASHBOARD WIDGETS ===== */
 .info-box {
     border-radius: 12px;
@@ -364,8 +395,6 @@ Matching the frontend design with ocean blues and warm oranges
 .info-box-icon {
     background: linear-gradient(45deg, var(--ocean-blue), var(--seafoam)) !important;
 }
-
-/* ===== CUSTOM SCROLLBAR ===== */
 ::-webkit-scrollbar {
     width: 8px;
 }
@@ -383,7 +412,7 @@ Matching the frontend design with ocean blues and warm oranges
     background: var(--deep-ocean);
 }
 
-/* ===== LOGIN PAGE STYLING ===== */
+/* ===== CUSTOM SCROLLBAR ===== */
 .login-box {
     background: white;
     border-radius: 12px;

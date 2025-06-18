@@ -60,7 +60,7 @@ ROOT_URLCONF = 'restaurant_booking.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],  # ADD THIS LINE
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -162,14 +162,15 @@ STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
 
-# Complete Jazzmin Configuration with Your Logo - UPDATED
+# Replace your JAZZMIN_SETTINGS in settings.py with this:
+
 JAZZMIN_SETTINGS = {
     "site_title": "Resto Pêcheur Admin",
     "site_header": "Resto Pêcheur",
     "site_brand": "Resto Pêcheur",
-    "site_logo": "admin/img/logo.png",  # ← Your octopus logo!
-    "login_logo": "admin/img/logo.png",  # ← Logo on login page too
-    "site_logo_classes": "",  # ← REMOVED: "img-circle elevation-3" to prevent circle styling
+    "site_logo": "admin/img/logo.png",
+    "login_logo": "admin/img/logo.png",
+    "site_logo_classes": "",
     "welcome_sign": "De l'océan à votre assiette - Administration",
     "copyright": "Resto Pêcheur 2025 - من المحيط إلى طبقكم",
     
@@ -181,13 +182,14 @@ JAZZMIN_SETTINGS = {
     "custom_css": "admin/css/theme.css", 
     "custom_js": None,
     
-    # Navigation with ocean emojis
+    # Top navigation - REMOVED DASHBOARD LINK
     "topmenu_links": [
         {"name": "🏠 Accueil", "url": "admin:index"},
         {"name": "🌊 Site Web", "url": "/", "new_window": True},
         {"name": "🐟 Réservations", "url": "/admin/reservations/reservation/"},
     ],
     
+    # User menu - ALSO REMOVED DASHBOARD LINK
     "usermenu_links": [
         {"name": "Voir le site", "url": "/", "new_window": True},
     ],
@@ -202,6 +204,7 @@ JAZZMIN_SETTINGS = {
         "reservations.Reservation": "fas fa-fish",
         "reservations.TimeSlot": "fas fa-clock",
         "reservations.SpecialDate": "fas fa-calendar-alt",
+        "reservations.Restaurant": "fas fa-store",
     },
     
     "default_icon_parents": "fas fa-waves",
@@ -212,51 +215,11 @@ JAZZMIN_SETTINGS = {
     # Hide unnecessary models for single restaurant
     "hide_apps": [],
     "hide_models": [
-        "reservations.Restaurant",  # You only have one restaurant
         "auth.Group",               # Single admin, no groups needed
+        "reservations.Restaurant",  # HIDE RESTAURANT MODEL - ONLY ONE RESTAURANT
     ],
     
     "show_sidebar": True,
     "navigation_expanded": True,
     "changeform_format": "horizontal_tabs",
-}
-
-# Ocean-inspired UI tweaks - UPDATED
-JAZZMIN_UI_TWEAKS = {
-    "navbar_small_text": False,
-    "footer_small_text": False,
-    "body_small_text": False,
-    "brand_small_text": False,
-    
-    # Ocean colors matching your frontend
-    "brand_colour": "#1e88e5",      # Ocean blue
-    "accent": "accent-info",        # Blue accent
-    "navbar": "navbar-dark",        # Dark like ocean depths
-    "no_navbar_border": False,
-    "navbar_fixed": False,
-    "layout_boxed": False,
-    "footer_fixed": False,
-    "sidebar_fixed": False,
-    "sidebar": "sidebar-dark-primary",  # Deep ocean blue
-    "sidebar_nav_small_text": False,
-    "sidebar_disable_expand": False,
-    "sidebar_nav_child_indent": False,
-    "sidebar_nav_compact_style": False,
-    "sidebar_nav_legacy_style": False,
-    "sidebar_nav_flat_style": False,
-    
-    "theme": "cerulean",  # Ocean blue theme
-    "dark_mode_theme": None,
-    
-    # Button styling
-    "button_classes": {
-        "primary": "btn-info",      # Ocean blue
-        "secondary": "btn-secondary",
-        "info": "btn-info",
-        "warning": "btn-warning",   # Orange like your frontend
-        "danger": "btn-danger", 
-        "success": "btn-success"
-    },
-    
-    "actions_sticky_top": False,
 }
