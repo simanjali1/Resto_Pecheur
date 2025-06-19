@@ -147,10 +147,22 @@
             margin-bottom: 20px;
         }
 
-        .left-column, .right-column {
+        .left-column {
             display: flex;
             flex-direction: column;
             gap: 15px;
+        }
+
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: fit-content;
+        }
+
+        .right-column .card {
+            flex: 1;
+            min-height: 450px;
         }
 
         .card {
@@ -158,6 +170,7 @@
             border-radius: 10px;
             box-shadow: 0 3px 12px rgba(0,0,0,0.08);
             overflow: hidden;
+            min-height: 200px;
         }
 
         .card-header {
@@ -307,8 +320,8 @@
 {% block content %}
 <div class="dashboard-container">
     <div class="dashboard-header">
-        <h2>🦐 Tableau de Bord Unifié</h2>
-        <p class="dashboard-subtitle">Vue d'ensemble complète des réservations et gestion</p>
+        <h2>🦐 Administration - Resto Pêcheur</h2>
+        <p class="dashboard-subtitle">Interface de gestion des réservations et contrôle du restaurant</p>
         <div class="live-time">
             <span id="current-time"></span>
         </div>
@@ -323,19 +336,19 @@
             </div>
         </div>
         
-        <div class="metric-card today-guests">
-            <div class="metric-icon">👥</div>
-            <div class="metric-content">
-                <span class="metric-number" id="today-guests">0</span>
-                <span class="metric-label">Clients Attendus</span>
-            </div>
-        </div>
-        
         <div class="metric-card available-tables">
             <div class="metric-icon">🍽️</div>
             <div class="metric-content">
                 <span class="metric-number" id="available-tables">20/20</span>
                 <span class="metric-label">Tables Disponibles</span>
+            </div>
+        </div>
+        
+        <div class="metric-card today-guests">
+            <div class="metric-icon">👥</div>
+            <div class="metric-content">
+                <span class="metric-number" id="today-guests">0</span>
+                <span class="metric-label">Clients Attendus</span>
             </div>
         </div>
         
@@ -389,8 +402,32 @@
                 <div class="card-header">
                     <h3>🔔 Activité Récente</h3>
                 </div>
-                <div class="no-data">
-                    <p>Aucune activité récente</p>
+                <div style="padding: 20px; height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                    <div style="text-align: center; color: #6c757d; margin-bottom: 30px;">
+                        <div style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;">📋</div>
+                        <p style="margin: 0; font-size: 1.1rem;">Aucune activité récente</p>
+                        <p style="margin: 10px 0 0 0; color: #999; font-size: 0.9rem;">Les nouvelles réservations apparaîtront ici</p>
+                    </div>
+                    
+                    <div style="border-top: 1px solid #f0f0f0; padding-top: 20px;">
+                        <h4 style="margin: 0 0 15px 0; color: #2c3e50; font-size: 0.95rem;">À surveiller aujourd'hui :</h4>
+                        <div class="stat-item">
+                            <span class="stat-label">🔍 Confirmations en attente</span>
+                            <span class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">⏰ Réservations dans 2h</span>
+                            <span class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">❌ Annulations aujourd'hui</span>
+                            <span class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">🆕 Nouvelles demandes</span>
+                            <span class="stat-value">0</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -401,19 +438,27 @@
                 <div style="padding: 12px 16px;">
                     <div class="stat-item">
                         <span class="stat-label">Cette Semaine</span>
-                        <span class="stat-value">0 réservations</span>
+                        <span class="stat-value">{{ metrics.week_reservations|default:0 }} réservations</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Ce Mois</span>
-                        <span class="stat-value">0 réservations</span>
+                        <span class="stat-value">{{ metrics.month_reservations|default:0 }} réservations</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">En Attente</span>
-                        <span class="stat-value">0 demandes</span>
+                        <span class="stat-value">{{ metrics.today_pending|default:0 }} demandes</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Prochain Créneau</span>
-                        <span class="stat-value">Disponible</span>
+                        <span class="stat-value" id="next-slot">{{ metrics.next_available_slot|default:"Disponible" }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Capacité utilisée</span>
+                        <span class="stat-value">{{ metrics.occupancy_rate|default:0 }}%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Moyenne par jour</span>
+                        <span class="stat-value">{{ metrics.daily_average|default:0 }} réservations</span>
                     </div>
                 </div>
             </div>

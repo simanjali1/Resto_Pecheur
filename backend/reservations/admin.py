@@ -1,9 +1,10 @@
-# reservations/admin.py - KEEP SIDEBAR, REPLACE ONLY MAIN CONTENT
+# reservations/admin.py - FIXED VERSION WITH PROPER DATA
 from django.contrib import admin
 from django.utils.html import format_html
 from django.utils import timezone
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
+from django.db.models import Sum, Count
 from datetime import timedelta
 from .models import Restaurant, Reservation, TimeSlot, SpecialDate
 
@@ -16,44 +17,165 @@ try:
 except admin.sites.NotRegistered:
     pass
 
-# Custom admin site class to override only the index content
-class CustomAdminSite(admin.AdminSite):
-    def index(self, request, extra_context=None):
-        """
-        Override admin index to show unified dashboard while keeping sidebar
-        """
-        from . import views
-        # Get the dashboard context
-        dashboard_context = views.dashboard_view(request).context_data if hasattr(views.dashboard_view(request), 'context_data') else {}
+def get_dashboard_metrics():
+    """Get dashboard metrics directly"""
+    today = timezone.now().date()
+    week_start = today - timedelta(days=today.weekday())
+    month_start = today.replace(day=1)
+    
+    # Get restaurant instance
+    restaurant = Restaurant.objects.first()
+    
+    # Calculate metrics
+    metrics = {
+        'today_reservations': Reservation.objects.filter(date=today).count(),
+        'today_confirmed': Reservation.objects.filter(date=today, status='confirmed').count(),
+        'today_pending': Reservation.objects.filter(date=today, status='pending').count(),
+        'today_guests': Reservation.objects.filter(date=today).aggregate(
+            total=Sum('number_of_guests')
+        )['total'] or 0,
         
-        # Use the unified dashboard template but with admin base
-        context = {
-            'title': 'Tableau de Bord Unifié',
-            'app_list': self.get_app_list(request),
-            'available_apps': self.get_app_list(request),
-            **dashboard_context,
-        }
-        context.update(extra_context or {})
+        'week_reservations': Reservation.objects.filter(date__gte=week_start).count(),
+        'month_reservations': Reservation.objects.filter(date__gte=month_start).count(),
         
-        return TemplateResponse(request, 'admin/unified_dashboard_with_sidebar.html', context)
+        'total_tables': restaurant.number_of_tables if restaurant else 20,
+        'available_tables': get_available_tables_count(today),
+        
+        'peak_hour': get_peak_hour_today(today),
+        'next_available_slot': get_next_available_slot(),
+        'occupancy_rate': restaurant.get_occupancy_rate_today() if restaurant else 0,
+        'daily_average': round(Reservation.objects.filter(date__gte=month_start).count() / max(1, (today - month_start).days + 1), 1),
+    }
+    
+    # Chart data
+    chart_data = {
+        'weekly_reservations': {
+            'labels': ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+            'data': get_weekly_stats(week_start)
+        },
+        'daily_time_slots': {
+            'labels': ['12:00', '13:00', '14:00', '19:00', '20:00', '21:00'],
+            'data': get_hourly_stats_today(today)
+        },
+    }
+    
+    return metrics, chart_data
 
-# Don't override the entire admin site, just patch the index method
-original_index = admin.site.index
+def get_available_tables_count(date):
+    """Calculate available tables for given date"""
+    restaurant = Restaurant.objects.first()
+    if not restaurant:
+        return 20
+    
+    reservations_count = Reservation.objects.filter(
+        date=date,
+        status__in=['confirmed', 'pending']
+    ).count()
+    
+    return max(0, restaurant.number_of_tables - reservations_count)
+
+def get_peak_hour_today(date):
+    """Find the busiest hour for today"""
+    peak_hour = Reservation.objects.filter(
+        date=date,
+        status__in=['pending', 'confirmed']
+    ).values('time').annotate(
+        count=Count('id')
+    ).order_by('-count').first()
+    
+    if peak_hour and peak_hour['count'] > 0:
+        return peak_hour['time'].strftime('%H:%M')
+    return None
+
+def get_next_available_slot():
+    """Find next available time slot"""
+    now = timezone.now()
+    current_date = now.date()
+    current_time = now.time()
+    
+    print(f"DEBUG: Heure actuelle = {current_time}")  # Debug
+    
+    for days_ahead in range(7):
+        check_date = current_date + timedelta(days=days_ahead)
+        time_slots = TimeSlot.objects.filter(is_active=True).order_by('time')
+        
+        print(f"DEBUG: Jour {days_ahead}, Date = {check_date}")  # Debug
+        
+        for slot in time_slots:
+            print(f"DEBUG: Créneau = {slot.time}")  # Debug
+            
+            # Si c'est aujourd'hui, vérifier que l'heure n'est pas déjà passée
+            if days_ahead == 0:
+                print(f"DEBUG: Comparaison: {slot.time} < {current_time} = {slot.time < current_time}")  # Debug
+                if slot.time < current_time:
+                    print(f"DEBUG: Skip créneau {slot.time} (déjà passé)")  # Debug
+                    continue  # Skip ce créneau car l'heure est déjà passée
+            
+            reservations_count = Reservation.objects.filter(
+                date=check_date,
+                time=slot.time,
+                status__in=['confirmed', 'pending']
+            ).count()
+            
+            print(f"DEBUG: Créneau {slot.time} - Réservations: {reservations_count}/{slot.max_reservations}")  # Debug
+            
+            if reservations_count < slot.max_reservations:
+                if days_ahead == 0:
+                    result = f"Aujourd'hui {slot.time.strftime('%H:%M')}"
+                elif days_ahead == 1:
+                    result = f"Demain {slot.time.strftime('%H:%M')}"
+                else:
+                    result = f"{check_date.strftime('%d/%m')} à {slot.time.strftime('%H:%M')}"
+                print(f"DEBUG: Résultat trouvé = {result}")  # Debug
+                return result
+    
+    print("DEBUG: Aucun créneau trouvé")  # Debug
+    return "Aucun créneau disponible cette semaine"
+
+def get_weekly_stats(week_start):
+    """Get reservation data for the current week"""
+    data = []
+    for i in range(7):
+        day = week_start + timedelta(days=i)
+        count = Reservation.objects.filter(date=day).count()
+        data.append(count)
+    return data
+
+def get_hourly_stats_today(date):
+    """Get reservation data by time slots for today"""
+    time_slots = TimeSlot.objects.filter(is_active=True).order_by('time')
+    data = []
+    
+    for slot in time_slots:
+        count = Reservation.objects.filter(
+            date=date,
+            time=slot.time
+        ).count()
+        data.append(count)
+    
+    # If no time slots, return default data
+    if not data:
+        data = [0, 0, 0, 0, 0, 0]
+    
+    return data
 
 def custom_admin_index(request, extra_context=None):
-    """Custom admin index that shows unified dashboard with sidebar"""
-    # Import here to avoid circular imports
-    from . import views
+    """Custom admin index that shows unified dashboard with sidebar and REAL DATA"""
     
-    # Get dashboard data
-    try:
-        dashboard_response = views.dashboard_view(request)
-        if hasattr(dashboard_response, 'context_data'):
-            dashboard_context = dashboard_response.context_data
-        else:
-            dashboard_context = {}
-    except:
-        dashboard_context = {}
+    # Get dashboard metrics
+    metrics, chart_data = get_dashboard_metrics()
+    
+    # Recent reservations (last 24 hours)
+    now = timezone.now()
+    recent_reservations = Reservation.objects.filter(
+        created_at__gte=now - timedelta(hours=24)
+    ).order_by('-created_at')[:10]
+    
+    # Today's schedule
+    today = timezone.now().date()
+    todays_schedule = Reservation.objects.filter(
+        date=today
+    ).order_by('time')
     
     # Get admin context
     app_list = admin.site.get_app_list(request)
@@ -62,7 +184,10 @@ def custom_admin_index(request, extra_context=None):
         'title': 'Tableau de Bord Unifié - Resto Pêcheur',
         'app_list': app_list,
         'available_apps': app_list,
-        **dashboard_context,
+        'metrics': metrics,
+        'chart_data': chart_data,
+        'recent_reservations': recent_reservations,
+        'todays_schedule': todays_schedule,
     }
     context.update(extra_context or {})
     
@@ -102,7 +227,6 @@ class RestaurantAdmin(admin.ModelAdmin):
     get_occupancy_rate.short_description = 'Taux Occupation Aujourd\'hui'
     
     def has_add_permission(self, request):
-        # Only allow one restaurant
         return not Restaurant.objects.exists()
 
 class ReservationAdmin(admin.ModelAdmin):
@@ -164,7 +288,6 @@ class ReservationAdmin(admin.ModelAdmin):
         qs = super().get_queryset(request)
         return qs.select_related().order_by('-date', '-time')
     
-    # Custom actions
     def mark_as_confirmed(self, request, queryset):
         updated = queryset.update(status='confirmed')
         self.message_user(request, f'{updated} réservations marquées comme confirmées.')
@@ -255,10 +378,9 @@ class SpecialDateAdmin(admin.ModelAdmin):
     
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        # Show upcoming dates first, then recent past dates
         return qs.filter(date__gte=timezone.now().date() - timedelta(days=30))
 
-# Register all models - ONLY ONCE
+# Register all models
 admin.site.register(Restaurant, RestaurantAdmin)
 admin.site.register(Reservation, ReservationAdmin)
 admin.site.register(TimeSlot, TimeSlotAdmin)

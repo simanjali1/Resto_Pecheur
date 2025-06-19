@@ -182,17 +182,11 @@ JAZZMIN_SETTINGS = {
     "custom_css": "admin/css/theme.css", 
     "custom_js": None,
     
-    # Top navigation - REMOVED DASHBOARD LINK
-    "topmenu_links": [
-        {"name": "🏠 Accueil", "url": "admin:index"},
-        {"name": "🌊 Site Web", "url": "/", "new_window": True},
-        {"name": "🐟 Réservations", "url": "/admin/reservations/reservation/"},
-    ],
+    # REMOVED ALL TOP NAVIGATION LINKS
+    "topmenu_links": [],
     
-    # User menu - ALSO REMOVED DASHBOARD LINK
-    "usermenu_links": [
-        {"name": "Voir le site", "url": "/", "new_window": True},
-    ],
+    # REMOVED ALL USER MENU LINKS
+    "usermenu_links": [],
     
     # Menu ordering
     "order_with_respect_to": ["reservations", "auth"],
