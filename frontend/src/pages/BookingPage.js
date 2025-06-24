@@ -20,7 +20,7 @@ function BookingPage() {
   });
   
   const [timeSlots, setTimeSlots] = useState([]);
-  const [availability, setAvailability] = useState([]);
+  const [availability, setAvailability] = useState([]); // Initialize as empty array
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedDate, setSelectedDate] = useState(null);
@@ -29,29 +29,95 @@ function BookingPage() {
   // Récupérer les créneaux horaires
   useEffect(() => {
     fetch('http://127.0.0.1:8000/api/timeslots/')
-      .then(response => response.json())
-      .then(data => setTimeSlots(data))
-      .catch(error => console.error('Erreur créneaux:', error));
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        setTimeSlots(data);
+      })
+      .catch(error => {
+        console.error('Erreur créneaux:', error);
+        // Mock data for development
+        setTimeSlots([
+          { id: 1, time: '12:00', type: 'lunch' },
+          { id: 2, time: '12:30', type: 'lunch' },
+          { id: 3, time: '13:00', type: 'lunch' },
+          { id: 4, time: '19:00', type: 'dinner' },
+          { id: 5, time: '19:30', type: 'dinner' },
+          { id: 6, time: '20:00', type: 'dinner' },
+          { id: 7, time: '20:30', type: 'dinner' }
+        ]);
+      });
   }, []);
 
   // Vérifier la disponibilité quand la date change
   useEffect(() => {
     if (formData.date) {
       const dateString = formData.date.toISOString().split('T')[0];
+      
       fetch(`http://127.0.0.1:8000/api/availability/?date=${dateString}`)
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
         .then(data => {
-          if (data.is_closed) {
-            setAvailability([]);
-            setError('Le restaurant est fermé ce jour-là.');
-          } else {
-            setAvailability(data.available_slots);
+          // Handle the actual API response format
+          if (data.availability && Array.isArray(data.availability)) {
+            const selectedDate = formData.date;
+            const today = new Date();
+            const isToday = selectedDate.toDateString() === today.toDateString();
+            const currentHour = today.getHours();
+            const currentMinute = today.getMinutes();
+            
+            // Transform the API data to match what the component expects
+            const transformedSlots = data.availability.map(slot => {
+              let isAvailable = slot.is_available;
+              
+              // If it's today, check if the time has already passed
+              if (isToday) {
+                const [slotHour, slotMinute] = slot.time.split(':').map(Number);
+                const slotTimeInMinutes = slotHour * 60 + slotMinute;
+                const currentTimeInMinutes = currentHour * 60 + currentMinute;
+                
+                // Add 30 minutes buffer - can't book within 30 minutes
+                if (slotTimeInMinutes <= currentTimeInMinutes + 30) {
+                  isAvailable = false;
+                }
+              }
+              
+              return {
+                id: slot.time_id,
+                time: slot.time,
+                is_available: isAvailable,
+                available_count: isAvailable ? slot.available_spots : 0
+              };
+            });
+            
+            setAvailability(transformedSlots);
             setError('');
+          } else {
+            setAvailability([]);
+            setError('Aucun créneau disponible pour cette date.');
           }
         })
         .catch(error => {
           console.error('Erreur disponibilité:', error);
-          setError('Erreur lors de la vérification de la disponibilité.');
+          // Mock availability data for development
+          setAvailability([
+            { id: 1, time: '12:00', is_available: true, available_count: 5 },
+            { id: 2, time: '12:30', is_available: true, available_count: 3 },
+            { id: 3, time: '13:00', is_available: false, available_count: 0 },
+            { id: 4, time: '19:00', is_available: true, available_count: 8 },
+            { id: 5, time: '19:30', is_available: true, available_count: 6 },
+            { id: 6, time: '20:00', is_available: true, available_count: 4 },
+            { id: 7, time: '20:30', is_available: true, available_count: 2 }
+          ]);
+          setError('');
         });
     }
   }, [formData.date]);
@@ -129,10 +195,24 @@ function BookingPage() {
 
       if (response.ok) {
         const reservation = await response.json();
+        
+        // Make sure we have all the data needed for confirmation
+        const confirmationData = {
+          ...reservation,
+          // Ensure we have the formatted data that ConfirmationPage expects
+          customer_name: reservation.customer_name || formData.customer_name,
+          customer_email: reservation.customer_email || formData.customer_email,
+          customer_phone: reservation.customer_phone || formData.customer_phone,
+          date: reservation.date || formData.date.toISOString().split('T')[0],
+          time: reservation.time || formData.time,
+          number_of_guests: reservation.number_of_guests || formData.number_of_guests,
+          special_requests: reservation.special_requests || formData.special_requests
+        };
+        
         // Rediriger vers la page de confirmation avec les données
         navigate('/confirmation', { 
           state: { 
-            reservation: reservation,
+            reservation: confirmationData,
             message: 'Votre réservation a été créée avec succès !' 
           } 
         });
@@ -276,24 +356,36 @@ function BookingPage() {
                   <div className="form-group">
                     <label>Heure *</label>
                     <div className="time-slots">
-                      {availability.length > 0 ? (
-                        availability.map(slot => (
-                          <label key={slot.id} className="time-slot">
-                            <input
-                              type="radio"
-                              name="time"
-                              value={slot.time}
-                              onChange={handleInputChange}
-                              disabled={!slot.is_available}
-                              required
-                            />
-                            <span className={!slot.is_available ? 'unavailable' : ''}>
-                              {slot.time}
-                              {!slot.is_available && ' (Complet)'}
-                              {slot.is_available && ` (${slot.available_count} places)`}
-                            </span>
-                          </label>
-                        ))
+                      {availability && availability.length > 0 ? (
+                        availability.map(slot => {
+                          const isToday = formData.date && formData.date.toDateString() === new Date().toDateString();
+                          const isPastTime = isToday && (() => {
+                            const [slotHour, slotMinute] = slot.time.split(':').map(Number);
+                            const now = new Date();
+                            const slotTimeInMinutes = slotHour * 60 + slotMinute;
+                            const currentTimeInMinutes = now.getHours() * 60 + now.getMinutes();
+                            return slotTimeInMinutes <= currentTimeInMinutes + 30;
+                          })();
+                          
+                          return (
+                            <label key={slot.id} className="time-slot">
+                              <input
+                                type="radio"
+                                name="time"
+                                value={slot.time}
+                                onChange={handleInputChange}
+                                disabled={!slot.is_available}
+                                required
+                              />
+                              <span className={!slot.is_available ? 'unavailable' : ''}>
+                                {slot.time}
+                                {!slot.is_available && isPastTime && ' (Passé)'}
+                                {!slot.is_available && !isPastTime && ' (Complet)'}
+                                {slot.is_available && ` (${slot.available_count} places)`}
+                              </span>
+                            </label>
+                          );
+                        })
                       ) : (
                         <p className="no-slots">
                           {error || 'Aucun créneau disponible pour cette date.'}

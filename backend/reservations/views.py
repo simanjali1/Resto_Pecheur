@@ -6,11 +6,14 @@ from datetime import datetime, timedelta
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import JsonResponse
 from django.views.generic import ListView, DetailView, CreateView
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 from .models import Restaurant, Reservation, TimeSlot, SpecialDate
 from .serializers import ReservationSerializer, TimeSlotSerializer, RestaurantSerializer
+import json
 
 # ===== API VIEWS FOR FRONTEND (React) =====
 
@@ -21,21 +24,205 @@ class RestaurantDetailView(generics.RetrieveAPIView):
     
     def get_object(self):
         # Return the first restaurant (assuming single restaurant)
-        return Restaurant.objects.first()
+        restaurant = Restaurant.objects.first()
+        if not restaurant:
+            # Create default restaurant if none exists
+            restaurant = Restaurant.objects.create(
+                name="Resto Pêcheur",
+                address="Tangier, Morocco",
+                phone="+212 XX XX XX XX",
+                email="contact@restopecheur.com",
+                capacity=50,
+                number_of_tables=20,
+                opening_time="12:00",
+                closing_time="23:00"
+            )
+        return restaurant
 
 class TimeSlotListView(generics.ListAPIView):
     """List all available time slots"""
-    queryset = TimeSlot.objects.filter(is_active=True)
     serializer_class = TimeSlotSerializer
+    
+    def get_queryset(self):
+        queryset = TimeSlot.objects.filter(is_active=True).order_by('time')
+        
+        # If no time slots exist, create default ones
+        if not queryset.exists():
+            default_slots = [
+                {'time': '12:00', 'max_reservations': 10},
+                {'time': '13:00', 'max_reservations': 12},
+                {'time': '14:00', 'max_reservations': 10},
+                {'time': '19:00', 'max_reservations': 8},
+                {'time': '20:00', 'max_reservations': 10},
+                {'time': '21:00', 'max_reservations': 8},
+            ]
+            for slot_data in default_slots:
+                TimeSlot.objects.create(
+                    time=slot_data['time'],
+                    max_reservations=slot_data['max_reservations'],
+                    is_active=True
+                )
+            queryset = TimeSlot.objects.filter(is_active=True).order_by('time')
+        
+        return queryset
 
 class ReservationCreateView(generics.CreateAPIView):
     """Create new reservation"""
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
+    
+    def create(self, request, *args, **kwargs):
+        try:
+            # Validate data
+            data = request.data
+            required_fields = ['customer_name', 'customer_email', 'customer_phone', 'date', 'time', 'number_of_guests']
+            
+            for field in required_fields:
+                if field not in data or not data[field]:
+                    return Response(
+                        {'error': f'{field} is required'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            
+            # Check availability before creating
+            date_str = data['date']
+            time_str = data['time']
+            guests = int(data['number_of_guests'])
+            
+            try:
+                date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                time_obj = datetime.strptime(time_str, '%H:%M').time()
+            except ValueError:
+                return Response(
+                    {'error': 'Invalid date or time format'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Check if time slot exists and has capacity
+            try:
+                time_slot = TimeSlot.objects.get(time=time_obj, is_active=True)
+            except TimeSlot.DoesNotExist:
+                return Response(
+                    {'error': 'Selected time slot is not available'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Count existing reservations
+            existing_reservations = Reservation.objects.filter(
+                date=date,
+                time=time_obj,
+                status__in=['pending', 'confirmed']
+            ).count()
+            
+            if existing_reservations >= time_slot.max_reservations:
+                return Response(
+                    {'error': 'This time slot is fully booked'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Create the reservation
+            reservation = Reservation.objects.create(
+                customer_name=data['customer_name'],
+                customer_email=data['customer_email'],
+                customer_phone=data['customer_phone'],
+                date=date,
+                time=time_obj,
+                number_of_guests=guests,
+                special_requests=data.get('special_requests', ''),
+                status='pending'
+            )
+            
+            return Response({
+                'id': reservation.id,
+                'message': 'Reservation created successfully',
+                'reservation': {
+                    'id': reservation.id,
+                    'customer_name': reservation.customer_name,
+                    'date': reservation.date.strftime('%Y-%m-%d'),
+                    'time': reservation.time.strftime('%H:%M'),
+                    'number_of_guests': reservation.number_of_guests,
+                    'status': reservation.status
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+# ===== NEW: AVAILABILITY ENDPOINT THAT YOUR FRONTEND NEEDS =====
+@csrf_exempt
+def check_availability_by_date(request):
+    """Check availability for a specific date - This is what your frontend calls"""
+    if request.method == 'GET':
+        try:
+            date_str = request.GET.get('date')
+            if not date_str:
+                return JsonResponse({'error': 'Date parameter required'}, status=400)
+            
+            # Parse the date
+            try:
+                date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=400)
+            
+            # Get all active time slots
+            time_slots = TimeSlot.objects.filter(is_active=True).order_by('time')
+            
+            # If no time slots exist, create default ones
+            if not time_slots.exists():
+                default_slots = [
+                    {'time': '12:00', 'max_reservations': 10},
+                    {'time': '13:00', 'max_reservations': 12},
+                    {'time': '14:00', 'max_reservations': 10},
+                    {'time': '19:00', 'max_reservations': 8},
+                    {'time': '20:00', 'max_reservations': 10},
+                    {'time': '21:00', 'max_reservations': 8},
+                ]
+                for slot_data in default_slots:
+                    TimeSlot.objects.create(
+                        time=slot_data['time'],
+                        max_reservations=slot_data['max_reservations'],
+                        is_active=True
+                    )
+                time_slots = TimeSlot.objects.filter(is_active=True).order_by('time')
+            
+            availability_data = []
+            for slot in time_slots:
+                # Count existing reservations for this date and time
+                existing_reservations = Reservation.objects.filter(
+                    date=date,
+                    time=slot.time,
+                    status__in=['pending', 'confirmed']
+                ).count()
+                
+                available_spots = slot.max_reservations - existing_reservations
+                is_available = available_spots > 0
+                
+                availability_data.append({
+                    'time': slot.time.strftime('%H:%M'),
+                    'time_id': slot.id,
+                    'max_reservations': slot.max_reservations,
+                    'existing_reservations': existing_reservations,
+                    'available_spots': max(0, available_spots),
+                    'is_available': is_available
+                })
+            
+            return JsonResponse({
+                'date': date_str,
+                'availability': availability_data,
+                'total_slots': len(availability_data)
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'GET method required'}, status=405)
 
 @api_view(['GET'])
 def check_availability(request):
-    """Check availability for a specific date and time"""
+    """Check availability for a specific date and time - Legacy endpoint"""
     date_str = request.GET.get('date')
     time_str = request.GET.get('time')
     
@@ -76,6 +263,17 @@ def check_availability(request):
         'available': available_spots > 0,
         'available_spots': available_spots,
         'max_reservations': time_slot.max_reservations
+    })
+
+# ===== TEST ENDPOINT =====
+@csrf_exempt
+def api_test(request):
+    """Simple test endpoint to verify backend connection"""
+    return JsonResponse({
+        'status': 'success',
+        'message': 'Backend connected successfully!',
+        'timestamp': timezone.now().isoformat(),
+        'method': request.method
     })
 
 # ===== ADMIN API VIEWS =====
@@ -151,7 +349,7 @@ def dashboard_view(request):
         'total_tables': restaurant.number_of_tables if restaurant else 20,
         'available_tables': get_available_tables_count(today, now.time()),
         
-        'peak_hour': Reservation.objects.get_peak_hour_today(),
+        'peak_hour': get_peak_hour_today(today),
         'next_available_slot': get_next_available_slot(),
     }
     
@@ -168,16 +366,10 @@ def dashboard_view(request):
     # Alerts
     alerts = get_dashboard_alerts(today)
     
-    # Chart data using manager methods
+    # Chart data
     chart_data = {
-        'weekly_reservations': {
-            'labels': ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
-            'data': Reservation.objects.get_weekly_stats()
-        },
-        'daily_time_slots': {
-            'labels': ['12:00', '13:00', '14:00', '19:00', '20:00', '21:00'],
-            'data': Reservation.objects.get_hourly_stats_today()
-        },
+        'weekly_reservations': get_weekly_chart_data(week_start),
+        'daily_time_slots': get_daily_time_slots_data(today),
     }
     
     context = {
@@ -204,18 +396,38 @@ def get_available_tables_count(date, time):
     
     return max(0, restaurant.number_of_tables - reservations_count)
 
+def get_peak_hour_today(date):
+    """Find the busiest hour for today"""
+    peak_hour = Reservation.objects.filter(
+        date=date,
+        status__in=['pending', 'confirmed']
+    ).values('time').annotate(
+        count=Count('id')
+    ).order_by('-count').first()
+    
+    if peak_hour and peak_hour['count'] > 0:
+        return peak_hour['time'].strftime('%H:%M')
+    return None
+
 def get_next_available_slot():
     """Find next available time slot"""
-    now = timezone.now()
+    now = timezone.localtime(timezone.now())
+    current_date = now.date()
+    current_time = now.time()
     
     # Look for available slots in the next 7 days
     for days_ahead in range(7):
-        check_date = now.date() + timedelta(days=days_ahead)
+        check_date = current_date + timedelta(days=days_ahead)
         
         # Get all time slots for this date
         time_slots = TimeSlot.objects.filter(is_active=True).order_by('time')
         
         for slot in time_slots:
+            # If it's today, skip past time slots
+            if days_ahead == 0:
+                if slot.time <= current_time:
+                    continue
+            
             reservations_count = Reservation.objects.filter(
                 date=check_date,
                 time=slot.time,
@@ -226,10 +438,12 @@ def get_next_available_slot():
             if reservations_count < slot.max_reservations:
                 if days_ahead == 0:
                     return f"Aujourd'hui {slot.time.strftime('%H:%M')}"
+                elif days_ahead == 1:
+                    return f"Demain {slot.time.strftime('%H:%M')}"
                 else:
                     return f"{check_date.strftime('%d/%m')} à {slot.time.strftime('%H:%M')}"
     
-    return "Complet"
+    return "Aucun créneau disponible cette semaine"
 
 def get_dashboard_alerts(date):
     """Generate dashboard alerts"""

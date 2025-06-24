@@ -7,11 +7,19 @@
     {{ block.super }}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* FIXED: Override admin layout issues */
+        #content {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
         .dashboard-container {
             padding: 20px;
             background: #f8f9fa;
-            margin: -20px;
-            min-height: calc(100vh - 100px);
+            min-height: 100vh;
+            width: 100%;
+            box-sizing: border-box;
+            overflow-x: hidden;
         }
 
         .dashboard-header {
@@ -140,29 +148,26 @@
         .action-btn.primary { border-left-color: #667eea; }
         .action-btn.secondary { border-left-color: #6c757d; }
 
+        /* FIXED: Better responsive layout */
         .dashboard-content {
             display: grid;
-            grid-template-columns: 2fr 1fr;
+            grid-template-columns: 1fr;
             gap: 20px;
             margin-bottom: 20px;
         }
 
-        .left-column {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
         }
 
-        .right-column {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            height: fit-content;
-        }
-
-        .right-column .card {
-            flex: 1;
-            min-height: 450px;
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
         }
 
         .card {
@@ -170,7 +175,6 @@
             border-radius: 10px;
             box-shadow: 0 3px 12px rgba(0,0,0,0.08);
             overflow: hidden;
-            min-height: 200px;
         }
 
         .card-header {
@@ -192,91 +196,21 @@
             position: relative;
         }
 
-        .no-data {
-            text-align: center;
-            color: #6c757d;
-            padding: 30px 15px;
-            font-style: italic;
-            font-size: 0.9rem;
-        }
-
-        .management-section {
-            margin-top: 15px;
-        }
-
-        .section-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 12px;
-        }
-
-        .management-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-        }
-
-        .management-card {
+        .schedule-card {
             background: white;
             border-radius: 10px;
             box-shadow: 0 3px 12px rgba(0,0,0,0.08);
             overflow: hidden;
-        }
-
-        .management-header {
-            padding: 12px 16px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e9ecef;
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 0.9rem;
-        }
-
-        .management-content {
-            padding: 16px;
-        }
-
-        .management-actions {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-        }
-
-        .mgmt-btn {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 5px;
-            text-decoration: none;
-            font-size: 0.75rem;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-
-        .mgmt-btn-primary { background: #667eea; color: white; }
-        .mgmt-btn-success { background: #28a745; color: white; }
-        .mgmt-btn-warning { background: #ffc107; color: #212529; }
-        .mgmt-btn-info { background: #17a2b8; color: white; }
-
-        .mgmt-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            text-decoration: none;
-            color: inherit;
+            margin-bottom: 20px;
         }
 
         .stat-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 6px 0;
+            padding: 8px 16px;
             border-bottom: 1px solid #f0f0f0;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
         }
 
         .stat-item:last-child { border-bottom: none; }
@@ -290,28 +224,102 @@
             color: #2c3e50;
         }
 
-        @media (max-width: 1024px) {
-            .dashboard-content {
+        .schedule-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+
+        .schedule-item:hover {
+            background: #f8f9fa;
+        }
+
+        .schedule-item:last-child {
+            border-bottom: none;
+        }
+
+        .schedule-time {
+            font-weight: 600;
+            color: #667eea;
+            min-width: 60px;
+        }
+
+        .schedule-customer {
+            flex: 1;
+            margin-left: 12px;
+            font-weight: 500;
+        }
+
+        .schedule-details {
+            text-align: right;
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            margin-left: 8px;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-confirmed { background: #d4edda; color: #155724; }
+        .status-cancelled { background: #f8d7da; color: #721c24; }
+
+        /* FIXED: Responsive design */
+        @media (max-width: 1200px) {
+            .charts-row {
                 grid-template-columns: 1fr;
             }
         }
 
         @media (max-width: 768px) {
+            .dashboard-container {
+                padding: 15px;
+            }
+            
             .metrics-row {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
             }
             
             .quick-actions {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
             }
             
-            .management-grid {
+            .stats-row {
                 grid-template-columns: 1fr;
             }
             
             .live-time {
                 position: static;
                 margin-top: 8px;
+            }
+            
+            .metric-card {
+                padding: 12px;
+            }
+            
+            .metric-number {
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .metrics-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-actions {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -327,11 +335,12 @@
         </div>
     </div>
 
+    <!-- METRICS ROW -->
     <div class="metrics-row">
         <div class="metric-card today-reservations">
             <div class="metric-icon">📅</div>
             <div class="metric-content">
-                <span class="metric-number" id="today-reservations">0</span>
+                <span class="metric-number">{{ metrics.today_reservations|default:0 }}</span>
                 <span class="metric-label">Réservations Aujourd'hui</span>
             </div>
         </div>
@@ -339,7 +348,7 @@
         <div class="metric-card available-tables">
             <div class="metric-icon">🍽️</div>
             <div class="metric-content">
-                <span class="metric-number" id="available-tables">20/20</span>
+                <span class="metric-number">{{ metrics.available_tables|default:0 }}/{{ metrics.total_tables|default:20 }}</span>
                 <span class="metric-label">Tables Disponibles</span>
             </div>
         </div>
@@ -347,7 +356,7 @@
         <div class="metric-card today-guests">
             <div class="metric-icon">👥</div>
             <div class="metric-content">
-                <span class="metric-number" id="today-guests">0</span>
+                <span class="metric-number">{{ metrics.today_guests|default:0 }}</span>
                 <span class="metric-label">Clients Attendus</span>
             </div>
         </div>
@@ -355,12 +364,13 @@
         <div class="metric-card peak-hour">
             <div class="metric-icon">⏰</div>
             <div class="metric-content">
-                <span class="metric-number" id="peak-hour">--:--</span>
+                <span class="metric-number">{{ metrics.peak_hour|default:"--:--" }}</span>
                 <span class="metric-label">Heure de Pointe</span>
             </div>
         </div>
     </div>
 
+    <!-- QUICK ACTIONS -->
     <div class="quick-actions">
         <a href="/admin/reservations/reservation/add/" class="action-btn primary">
             ➕ Nouvelle Réservation
@@ -376,219 +386,144 @@
         </a>
     </div>
 
-    <div class="dashboard-content">
-        <div class="left-column">
-            <div class="card">
-                <div class="card-header">
-                    <h3>📊 Réservations Cette Semaine</h3>
-                </div>
-                <div class="chart-container">
-                    <canvas id="weeklyReservationsChart"></canvas>
-                </div>
+    <!-- CHARTS ROW -->
+    <div class="charts-row">
+        <div class="card">
+            <div class="card-header">
+                <h3>📊 Réservations Cette Semaine</h3>
             </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h3>⏰ Réservations par Créneaux - Aujourd'hui</h3>
-                </div>
-                <div class="chart-container">
-                    <canvas id="dailyTimeSlotsChart"></canvas>
-                </div>
+            <div class="chart-container">
+                <canvas id="weeklyReservationsChart"></canvas>
             </div>
         </div>
 
-        <div class="right-column">
-            <div class="card">
-                <div class="card-header">
-                    <h3>🔔 Activité Récente</h3>
-                </div>
-                <div style="padding: 20px; height: 100%; display: flex; flex-direction: column; justify-content: center;">
-                    <div style="text-align: center; color: #6c757d; margin-bottom: 30px;">
+        <div class="card">
+            <div class="card-header">
+                <h3>⏰ Réservations par Créneaux - Aujourd'hui</h3>
+            </div>
+            <div class="chart-container">
+                <canvas id="dailyTimeSlotsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="stats-row">
+        <div class="card">
+            <div class="card-header">
+                <h3>🔔 Activité Récente</h3>
+            </div>
+            <div style="min-height: 200px;">
+                {% if recent_reservations %}
+                    {% for reservation in recent_reservations %}
+                    <div class="stat-item">
+                        <span class="stat-label">{{ reservation.customer_name }}</span>
+                        <span class="stat-value">{{ reservation.date|date:"d/m" }} {{ reservation.time|time:"H:i" }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; color: #6c757d; padding: 40px 20px;">
                         <div style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;">📋</div>
                         <p style="margin: 0; font-size: 1.1rem;">Aucune activité récente</p>
                         <p style="margin: 10px 0 0 0; color: #999; font-size: 0.9rem;">Les nouvelles réservations apparaîtront ici</p>
                     </div>
-                    
-                    <div style="border-top: 1px solid #f0f0f0; padding-top: 20px;">
-                        <h4 style="margin: 0 0 15px 0; color: #2c3e50; font-size: 0.95rem;">À surveiller aujourd'hui :</h4>
-                        <div class="stat-item">
-                            <span class="stat-label">🔍 Confirmations en attente</span>
-                            <span class="stat-value">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">⏰ Réservations dans 2h</span>
-                            <span class="stat-value">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">❌ Annulations aujourd'hui</span>
-                            <span class="stat-value">0</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">🆕 Nouvelles demandes</span>
-                            <span class="stat-value">0</span>
-                        </div>
-                    </div>
-                </div>
+                {% endif %}
             </div>
+        </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <h3>📊 Statistiques Rapides</h3>
+        <div class="card">
+            <div class="card-header">
+                <h3>📊 Statistiques Rapides</h3>
+            </div>
+            <div>
+                <div class="stat-item">
+                    <span class="stat-label">Cette Semaine</span>
+                    <span class="stat-value">{{ metrics.week_reservations|default:0 }} réservations</span>
                 </div>
-                <div style="padding: 12px 16px;">
-                    <div class="stat-item">
-                        <span class="stat-label">Cette Semaine</span>
-                        <span class="stat-value">{{ metrics.week_reservations|default:0 }} réservations</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Ce Mois</span>
-                        <span class="stat-value">{{ metrics.month_reservations|default:0 }} réservations</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">En Attente</span>
-                        <span class="stat-value">{{ metrics.today_pending|default:0 }} demandes</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Prochain Créneau</span>
-                        <span class="stat-value" id="next-slot">{{ metrics.next_available_slot|default:"Disponible" }}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Capacité utilisée</span>
-                        <span class="stat-value">{{ metrics.occupancy_rate|default:0 }}%</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Moyenne par jour</span>
-                        <span class="stat-value">{{ metrics.daily_average|default:0 }} réservations</span>
-                    </div>
+                <div class="stat-item">
+                    <span class="stat-label">Ce Mois</span>
+                    <span class="stat-value">{{ metrics.month_reservations|default:0 }} réservations</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">En Attente</span>
+                    <span class="stat-value">{{ metrics.today_pending|default:0 }} demandes</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Confirmées</span>
+                    <span class="stat-value">{{ metrics.today_confirmed|default:0 }} confirmées</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Prochain Créneau</span>
+                    <span class="stat-value">{{ metrics.next_available_slot|default:"Disponible" }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Capacité utilisée</span>
+                    <span class="stat-value">{{ metrics.occupancy_rate|default:0 }}%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Moyenne par jour</span>
+                    <span class="stat-value">{{ metrics.daily_average|default:0 }} réservations</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="management-section">
-        <h2 class="section-title">🔧 Gestion Administrative</h2>
-        <div class="management-grid">
-            <div class="management-card">
-                <div class="management-header">
-                    Gestion des Réservations
-                </div>
-                <div class="management-content">
-                    <div class="management-actions">
-                        <a href="/admin/reservations/reservation/add/" class="mgmt-btn mgmt-btn-primary">
-                            ➕ Ajouter
-                        </a>
-                        <a href="/admin/reservations/reservation/" class="mgmt-btn mgmt-btn-info">
-                            📋 Voir Toutes
-                        </a>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">En attente</span>
-                        <span class="stat-value">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Confirmées</span>
-                        <span class="stat-value">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Cette semaine</span>
-                        <span class="stat-value">0</span>
+    <!-- TODAY'S SCHEDULE -->
+    <div class="schedule-card">
+        <div class="card-header">
+            <h3>📅 Planning d'Aujourd'hui {% if todays_schedule %}({{ todays_schedule|length }} réservation{{ todays_schedule|length|pluralize }}){% endif %}</h3>
+        </div>
+        <div>
+            {% if todays_schedule %}
+                {% for reservation in todays_schedule %}
+                <div class="schedule-item">
+                    <div class="schedule-time">{{ reservation.time|time:"H:i" }}</div>
+                    <div class="schedule-customer">{{ reservation.customer_name }}</div>
+                    <div class="schedule-details">
+                        {{ reservation.number_of_guests }} pers.
+                        <span class="status-badge status-{{ reservation.status }}">{{ reservation.status }}</span>
                     </div>
                 </div>
-            </div>
-
-            <div class="management-card">
-                <div class="management-header">
-                    Créneaux Horaires
+                {% endfor %}
+            {% else %}
+                <div style="padding: 30px; text-align: center; color: #6c757d;">
+                    <div style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;">📅</div>
+                    <p style="margin: 0; font-size: 1.1rem;">Aucune réservation pour aujourd'hui</p>
+                    <p style="margin: 10px 0 0 0; color: #999; font-size: 0.9rem;">Une journée calme au restaurant</p>
                 </div>
-                <div class="management-content">
-                    <div class="management-actions">
-                        <a href="/admin/reservations/timeslot/add/" class="mgmt-btn mgmt-btn-success">
-                            ➕ Ajouter
-                        </a>
-                        <a href="/admin/reservations/timeslot/" class="mgmt-btn mgmt-btn-warning">
-                            ✏️ Modifier
-                        </a>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Créneaux actifs</span>
-                        <span class="stat-value">6</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Prochaine dispo</span>
-                        <span class="stat-value">Disponible</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="management-card">
-                <div class="management-header">
-                    Dates Spéciales
-                </div>
-                <div class="management-content">
-                    <div class="management-actions">
-                        <a href="/admin/reservations/specialdate/add/" class="mgmt-btn mgmt-btn-success">
-                            ➕ Ajouter
-                        </a>
-                        <a href="/admin/reservations/specialdate/" class="mgmt-btn mgmt-btn-warning">
-                            ✏️ Modifier
-                        </a>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Événements à venir</span>
-                        <span class="stat-value">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Fermetures</span>
-                        <span class="stat-value">0</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="management-card">
-                <div class="management-header">
-                    Restaurant
-                </div>
-                <div class="management-content">
-                    <div class="management-actions">
-                        <a href="/admin/reservations/restaurant/" class="mgmt-btn mgmt-btn-info">
-                            ⚙️ Paramètres
-                        </a>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Capacité totale</span>
-                        <span class="stat-value">20 tables</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Taux occupation</span>
-                        <span class="stat-value">0%</span>
-                    </div>
-                </div>
-            </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
 <script>
-    function updateTime() {
-        const now = new Date();
-        document.getElementById('current-time').textContent = now.toLocaleString('fr-FR');
+// Update time display
+function updateTime() {
+    const now = new Date();
+    const timeElement = document.getElementById('current-time');
+    if (timeElement) {
+        timeElement.textContent = now.toLocaleString('fr-FR');
     }
-    updateTime();
-    setInterval(updateTime, 1000);
+}
+updateTime();
+setInterval(updateTime, 1000);
 
-    const chartColors = {
-        primary: '#667eea',
-        secondary: '#764ba2',
-    };
+// Chart colors
+const chartColors = {
+    primary: '#667eea',
+    secondary: '#764ba2',
+};
 
-    const weeklyCtx = document.getElementById('weeklyReservationsChart').getContext('2d');
+// Weekly reservations chart
+const weeklyCtx = document.getElementById('weeklyReservationsChart');
+if (weeklyCtx) {
     new Chart(weeklyCtx, {
         type: 'line',
         data: {
-            labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+            labels: {{ chart_data.weekly_reservations.labels|safe }},
             datasets: [{
                 label: 'Réservations',
-                data: [0, 0, 0, 0, 0, 0, 0],
+                data: {{ chart_data.weekly_reservations.data|safe }},
                 borderColor: chartColors.primary,
                 backgroundColor: chartColors.primary + '20',
                 borderWidth: 3,
@@ -609,6 +544,13 @@
             scales: {
                 y: {
                     beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        precision: 0,
+                        callback: function(value) {
+                            return Number.isInteger(value) ? value : '';
+                        }
+                    },
                     grid: { color: 'rgba(0,0,0,0.1)' }
                 },
                 x: {
@@ -617,15 +559,18 @@
             }
         }
     });
+}
 
-    const dailyCtx = document.getElementById('dailyTimeSlotsChart').getContext('2d');
+// Daily time slots chart
+const dailyCtx = document.getElementById('dailyTimeSlotsChart');
+if (dailyCtx) {
     new Chart(dailyCtx, {
         type: 'bar',
         data: {
-            labels: ['12:00', '13:00', '14:00', '19:00', '20:00', '21:00'],
+            labels: {{ chart_data.daily_time_slots.labels|safe }},
             datasets: [{
                 label: 'Réservations',
-                data: [0, 0, 0, 0, 0, 0],
+                data: {{ chart_data.daily_time_slots.data|safe }},
                 backgroundColor: chartColors.secondary,
                 borderColor: chartColors.primary,
                 borderWidth: 1,
@@ -641,6 +586,13 @@
             scales: {
                 y: {
                     beginAtZero: true,
+                    ticks: {
+                        stepSize: 1,
+                        precision: 0,
+                        callback: function(value) {
+                            return Number.isInteger(value) ? value : '';
+                        }
+                    },
                     grid: { color: 'rgba(0,0,0,0.1)' }
                 },
                 x: {
@@ -649,5 +601,6 @@
             }
         }
     });
+}
 </script>
 {% endblock %}

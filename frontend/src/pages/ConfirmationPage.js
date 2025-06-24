@@ -29,17 +29,32 @@ function ConfirmationPage() {
   }
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'Date non disponible';
     const options = { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
     };
-    return new Date(dateString).toLocaleDateString('fr-FR', options);
+    try {
+      return new Date(dateString).toLocaleDateString('fr-FR', options);
+    } catch (error) {
+      return dateString;
+    }
   };
 
   const formatTime = (timeString) => {
-    return timeString.slice(0, 5); // Format HH:MM
+    if (!timeString) return 'Heure non disponible';
+    // Handle different time formats
+    if (typeof timeString === 'string') {
+      // If it's already in HH:MM format, return as is
+      if (timeString.includes(':') && timeString.length >= 5) {
+        return timeString.slice(0, 5); // Format HH:MM
+      }
+      // If it's just the time string, return it
+      return timeString;
+    }
+    return 'Heure non disponible';
   };
 
   const getStatusBadge = (status) => {
@@ -57,6 +72,9 @@ function ConfirmationPage() {
       </span>
     );
   };
+
+  // Debug: log the reservation data
+  console.log('Reservation data in ConfirmationPage:', reservation);
 
   return (
     <div className="confirmation-page">
@@ -78,7 +96,7 @@ function ConfirmationPage() {
             <div className="details-grid">
               <div className="detail-item">
                 <span className="detail-label">Numéro de réservation</span>
-                <span className="detail-value">#{reservation.id}</span>
+                <span className="detail-value">#{reservation.id || 'N/A'}</span>
               </div>
 
               <div className="detail-item">
@@ -90,12 +108,12 @@ function ConfirmationPage() {
 
               <div className="detail-item">
                 <span className="detail-label">Nom</span>
-                <span className="detail-value">{reservation.customer_name}</span>
+                <span className="detail-value">{reservation.customer_name || 'Non spécifié'}</span>
               </div>
 
               <div className="detail-item">
                 <span className="detail-label">Téléphone</span>
-                <span className="detail-value">{reservation.customer_phone}</span>
+                <span className="detail-value">{reservation.customer_phone || 'Non spécifié'}</span>
               </div>
 
               {reservation.customer_email && (
@@ -118,7 +136,7 @@ function ConfirmationPage() {
               <div className="detail-item highlight">
                 <span className="detail-label">Nombre de personnes</span>
                 <span className="detail-value">
-                  {reservation.number_of_guests} personne{reservation.number_of_guests > 1 ? 's' : ''}
+                  {reservation.number_of_guests || 1} personne{(reservation.number_of_guests || 1) > 1 ? 's' : ''}
                 </span>
               </div>
 

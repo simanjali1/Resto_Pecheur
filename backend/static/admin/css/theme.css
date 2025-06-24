@@ -1,24 +1,25 @@
 /* 
-Ocean Theme CSS for Resto Pêcheur Admin
-Matching the frontend design with ocean blues and warm oranges
+Updated Theme CSS for Resto Pêcheur Admin
+Changed from ocean blue to dark purple-gray (#333354)
 */
 
-/* ===== MAIN COLOR VARIABLES - Matching Frontend ===== */
+/* ===== MAIN COLOR VARIABLES - Updated with #333354 ===== */
 :root {
-    --ocean-blue: #1e88e5;
-    --deep-ocean: #0d47a1;
-    --warm-orange: #cb5103;  /* Exact frontend orange */
-    --hover-orange: #ff6b35; /* Frontend hover orange */
-    --light-blue: #e3f2fd;
-    --wave-color: rgba(203, 81, 3, 0.1);  /* Orange wave instead of blue */
-    --seafoam: #4fc3f7;
-    --coral: #ff7043;
+    --primary-color: #333354;      /* Main color - replaces ocean blue */
+    --deep-primary: #252540;       /* Darker version - replaces deep ocean */
+    --warm-orange: #cb5103;        /* Keep orange unchanged */
+    --hover-orange: #ff6b35;       /* Keep hover orange unchanged */
+    --light-primary: #e8e8f0;      /* Light version of primary */
+    --wave-color: rgba(203, 81, 3, 0.1);  /* Orange wave unchanged */
+    --seafoam: #4fc3f7;           /* Keep seafoam unchanged */
+    --coral: #ff7043;             /* Keep coral unchanged */
     --transparent-orange: rgba(255, 107, 53, 0.1);
+    --primary-transparent: rgba(51, 51, 84, 0.1);  /* New transparent primary */
 }
 
-/* ===== HEADER & NAVIGATION - Matching Frontend ===== */
+/* ===== HEADER & NAVIGATION - Updated Colors ===== */
 .main-header .navbar {
-    background: linear-gradient(135deg, rgba(30, 136, 229, 0.95) 0%, var(--deep-ocean) 100%) !important;
+    background: linear-gradient(135deg, rgba(51, 51, 84, 0.95) 0%, var(--deep-primary) 100%) !important;
     border-bottom: 3px solid var(--warm-orange);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(10px);
@@ -52,15 +53,15 @@ Matching the frontend design with ocean blues and warm oranges
     border-color: rgba(255, 107, 53, 0.4);
 }
 
-/* ===== SIDEBAR OCEAN STYLING ===== */
+/* ===== SIDEBAR UPDATED STYLING ===== */
 .main-sidebar {
-    background: linear-gradient(180deg, var(--deep-ocean) 0%, #1565c0 100%) !important;
-    box-shadow: 2px 0 8px rgba(13, 71, 161, 0.2);
+    background: linear-gradient(180deg, var(--deep-primary) 0%, var(--primary-color) 100%) !important;
+    box-shadow: 2px 0 8px rgba(51, 51, 84, 0.2);
     position: relative;
 }
 
 .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link {
-    color: #e3f2fd !important;
+    color: #e8e8f0 !important;
     border-radius: 8px;
     margin: 3px 10px;
     transition: all 0.3s ease;
@@ -125,7 +126,7 @@ Matching the frontend design with ocean blues and warm oranges
 /* ===== RESPONSIVE DESIGN - Updated for floating logo ===== */
 @media (max-width: 768px) {
     .main-sidebar {
-        background: var(--deep-ocean) !important;
+        background: var(--deep-primary) !important;
     }
     
     .main-sidebar::before {
@@ -146,14 +147,14 @@ Matching the frontend design with ocean blues and warm oranges
 
 /* ===== MAIN CONTENT AREA ===== */
 .content-wrapper {
-    background: linear-gradient(135deg, #f8f9fa 0%, var(--light-blue) 100%);
+    background: linear-gradient(135deg, #f8f9fa 0%, var(--light-primary) 100%);
     min-height: 100vh;
 }
 
 /* ===== CARDS & PANELS ===== */
 .card {
     border: none;
-    box-shadow: 0 4px 12px rgba(30, 136, 229, 0.15);
+    box-shadow: 0 4px 12px rgba(51, 51, 84, 0.15);
     border-radius: 12px;
     overflow: hidden;
     transition: all 0.3s ease;
@@ -161,25 +162,25 @@ Matching the frontend design with ocean blues and warm oranges
 
 .card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(30, 136, 229, 0.25);
+    box-shadow: 0 8px 24px rgba(51, 51, 84, 0.25);
 }
 
 .card-header {
-    background: linear-gradient(90deg, var(--light-blue) 0%, white 100%);
-    border-bottom: 2px solid var(--ocean-blue);
+    background: linear-gradient(90deg, var(--light-primary) 0%, white 100%);
+    border-bottom: 2px solid var(--primary-color);
     border-radius: 0 !important;
     padding: 1rem 1.5rem;
 }
 
 .card-title {
-    color: var(--deep-ocean);
+    color: var(--deep-primary);
     font-weight: 600;
     margin: 0;
 }
 
-/* ===== BUTTONS OCEAN STYLING ===== */
+/* ===== BUTTONS UPDATED STYLING ===== */
 .btn-info {
-    background: linear-gradient(45deg, var(--ocean-blue), var(--seafoam));
+    background: linear-gradient(45deg, var(--primary-color), #5555aa);
     border: none;
     border-radius: 8px;
     padding: 0.5rem 1.5rem;
@@ -188,9 +189,9 @@ Matching the frontend design with ocean blues and warm oranges
 }
 
 .btn-info:hover {
-    background: linear-gradient(45deg, var(--deep-ocean), var(--ocean-blue));
+    background: linear-gradient(45deg, var(--deep-primary), var(--primary-color));
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(30, 136, 229, 0.4);
+    box-shadow: 0 6px 16px rgba(51, 51, 84, 0.4);
 }
 
 .btn-warning {
@@ -220,7 +221,7 @@ Matching the frontend design with ocean blues and warm oranges
 }
 
 .table thead th {
-    background: linear-gradient(90deg, var(--ocean-blue), var(--seafoam));
+    background: linear-gradient(90deg, var(--primary-color), #5555aa);
     color: white;
     border: none;
     font-weight: 600;
@@ -239,27 +240,27 @@ Matching the frontend design with ocean blues and warm oranges
 }
 
 .table tbody tr:hover {
-    background: linear-gradient(90deg, var(--wave-color), rgba(255, 111, 0, 0.1));
+    background: linear-gradient(90deg, var(--primary-transparent), rgba(255, 111, 0, 0.1));
     transform: scale(1.01);
-    box-shadow: 0 2px 8px rgba(30, 136, 229, 0.2);
+    box-shadow: 0 2px 8px rgba(51, 51, 84, 0.2);
 }
 
 .table tbody td {
     padding: 0.75rem;
-    border-top: 1px solid rgba(30, 136, 229, 0.1);
+    border-top: 1px solid rgba(51, 51, 84, 0.1);
 }
 
 /* ===== FORMS & INPUTS ===== */
 .form-control {
-    border: 2px solid #e3f2fd;
+    border: 2px solid var(--light-primary);
     border-radius: 8px;
     padding: 0.75rem;
     transition: all 0.3s ease;
 }
 
 .form-control:focus {
-    border-color: var(--ocean-blue);
-    box-shadow: 0 0 0 0.2rem rgba(30, 136, 229, 0.25);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(51, 51, 84, 0.25);
     transform: translateY(-1px);
 }
 
@@ -272,10 +273,10 @@ Matching the frontend design with ocean blues and warm oranges
 }
 
 .alert-info {
-    background: linear-gradient(90deg, var(--light-blue), #e1f5fe);
-    border-left: 4px solid var(--ocean-blue);
+    background: linear-gradient(90deg, var(--light-primary), #f0f0f8);
+    border-left: 4px solid var(--primary-color);
     border-radius: 8px;
-    color: var(--deep-ocean);
+    color: var(--deep-primary);
 }
 
 .alert-warning {
@@ -293,7 +294,7 @@ Matching the frontend design with ocean blues and warm oranges
 }
 
 .breadcrumb-item a {
-    color: var(--ocean-blue);
+    color: var(--primary-color);
     text-decoration: none;
     font-weight: 500;
     transition: color 0.3s ease;
@@ -304,13 +305,13 @@ Matching the frontend design with ocean blues and warm oranges
 }
 
 .breadcrumb-item.active {
-    color: var(--deep-ocean);
+    color: var(--deep-primary);
     font-weight: 600;
 }
 
 /* ===== FOOTER ===== */
 .main-footer {
-    background: linear-gradient(90deg, var(--deep-ocean), var(--ocean-blue));
+    background: linear-gradient(90deg, var(--deep-primary), var(--primary-color));
     color: white;
     border-top: 3px solid var(--warm-orange);
     padding: 1rem;
@@ -343,15 +344,15 @@ Matching the frontend design with ocean blues and warm oranges
 }
 
 #changelist-search input[type="text"] {
-    border: 2px solid var(--light-blue);
+    border: 2px solid var(--light-primary);
     border-radius: 25px;
     padding: 0.5rem 1.5rem;
     width: 300px;
 }
 
 #changelist-search input[type="text"]:focus {
-    border-color: var(--ocean-blue);
-    box-shadow: 0 0 0 0.2rem rgba(30, 136, 229, 0.25);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(51, 51, 84, 0.25);
 }
 
 /* ===== MAKE ALL DASHBOARD SECTIONS FULL WIDTH STACKED ===== */
@@ -393,30 +394,31 @@ Matching the frontend design with ocean blues and warm oranges
 }
 
 .info-box-icon {
-    background: linear-gradient(45deg, var(--ocean-blue), var(--seafoam)) !important;
+    background: linear-gradient(45deg, var(--primary-color), #5555aa) !important;
 }
+
+/* ===== CUSTOM SCROLLBAR ===== */
 ::-webkit-scrollbar {
     width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--light-blue);
+    background: var(--light-primary);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--ocean-blue);
+    background: var(--primary-color);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--deep-ocean);
+    background: var(--deep-primary);
 }
 
-/* ===== CUSTOM SCROLLBAR ===== */
 .login-box {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(30, 136, 229, 0.3);
+    box-shadow: 0 8px 32px rgba(51, 51, 84, 0.3);
 }
 
 .login-logo img {
@@ -424,13 +426,13 @@ Matching the frontend design with ocean blues and warm oranges
     filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
 }
 
-/* ===== ADDITIONAL OCEAN EFFECTS ===== */
+/* ===== ADDITIONAL EFFECTS ===== */
 .content-header {
     background: transparent;
 }
 
 .content-header h1 {
-    color: var(--deep-ocean);
+    color: var(--deep-primary);
     font-weight: 600;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
@@ -448,20 +450,20 @@ Matching the frontend design with ocean blues and warm oranges
 
 /* Pagination styling */
 .pagination .page-link {
-    color: var(--ocean-blue);
-    border: 1px solid var(--light-blue);
+    color: var(--primary-color);
+    border: 1px solid var(--light-primary);
     border-radius: 8px;
     margin: 0 2px;
 }
 
 .pagination .page-link:hover {
-    background-color: var(--light-blue);
-    color: var(--deep-ocean);
+    background-color: var(--light-primary);
+    color: var(--deep-primary);
 }
 
 .pagination .page-item.active .page-link {
-    background-color: var(--ocean-blue);
-    border-color: var(--ocean-blue);
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
 }
 
 /* Error messages */

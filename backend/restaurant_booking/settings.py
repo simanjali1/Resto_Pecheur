@@ -26,11 +26,10 @@ SECRET_KEY = 'django-insecure--%m5*^=v+k0m+5892wzichk$_rhekn#-t+_e=2#4(y*qa0orvx
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+# FIXED: Remove duplicate assignment
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '*']
 
 # Application definition
-
 INSTALLED_APPS = [
     'jazzmin',  # Modern admin theme
     'django.contrib.admin',
@@ -60,7 +59,7 @@ ROOT_URLCONF = 'restaurant_booking.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # ADD THIS LINE
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -74,34 +73,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'restaurant_booking.wsgi.application'
 
-
-# Database - PostgreSQL Configuration
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# Database - Use SQLite for development (easier than PostgreSQL)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'restaurant_booking',
-        'USER': 'postgres',
-        'PASSWORD': 'simanjali',  # Le mot de passe que vous avez défini
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
-# Alternative: Base de données SQLite pour commencer (plus simple)
-# Décommentez ceci et commentez PostgreSQL si vous voulez commencer avec SQLite
+# Alternative: PostgreSQL Configuration (uncomment if you prefer PostgreSQL)
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'restaurant_booking',
+#         'USER': 'postgres',
+#         'PASSWORD': 'simanjali',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
 #     }
 # }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -117,26 +110,24 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = 'fr-fr'  # Français
-TIME_ZONE = 'Africa/Casablanca'  
+TIME_ZONE = 'Africa/Casablanca'
 
 USE_I18N = True
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Django REST Framework Configuration
@@ -154,16 +145,23 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
+# For development - allow all origins (easier debugging)
+CORS_ALLOW_ALL_ORIGINS = True
 
-# Static files configuration (make sure this exists)
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
+# CORS headers configuration
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
-# Replace your JAZZMIN_SETTINGS in settings.py with this:
-
+# Jazzmin admin theme configuration
 JAZZMIN_SETTINGS = {
     "site_title": "Resto Pêcheur Admin",
     "site_header": "Resto Pêcheur",
