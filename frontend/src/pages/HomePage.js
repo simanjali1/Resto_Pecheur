@@ -7,6 +7,14 @@ function HomePage() {
   const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('home');
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [isCarouselPlaying, setIsCarouselPlaying] = useState(true);
+
+  // TEST with online vertical video first
+  const mediaFiles = [
+    { type: 'video', src: 'https://sample-videos.com/zip/10/mp4/480/mp4-sample_640x360_1mb.mp4', alt: 'Test video' }
+    // { type: 'video', src: '/VIDEO1.mp4', alt: 'Restaurant video' }
+  ];
 
   useEffect(() => {
     // Récupérer les infos du restaurant depuis l'API Django
@@ -25,7 +33,7 @@ function HomePage() {
   useEffect(() => {
     const handleScroll = () => {
       const sections = ['home', 'about'];
-      const scrollPosition = window.scrollY + 200; // Offset for better detection
+      const scrollPosition = window.scrollY + 200;
 
       for (let section of sections) {
         const element = document.getElementById(section);
@@ -42,23 +50,29 @@ function HomePage() {
     };
 
     window.addEventListener('scroll', handleScroll);
-    // Call once to set initial active section
     handleScroll();
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Handle navigation click
+  // Simplified for testing
+  useEffect(() => {
+    console.log('🔍 Testing Vimeo embed');
+  }, []);
+
   const handleNavClick = (section) => {
     setActiveSection(section);
     
     if (section === 'home' || section === 'about') {
-      // Smooth scroll to section
       const element = document.getElementById(section);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth' });
       }
     }
+  };
+
+  const goToNextMedia = () => {
+    setCurrentMediaIndex((prevIndex) => (prevIndex + 1) % mediaFiles.length);
   };
 
   if (loading) {
@@ -132,54 +146,75 @@ function HomePage() {
         </div>
       </header>
 
-      {/* Section Présentation */}
+      {/* Section Présentation - EXACTLY like your drawing */}
       <section id="about" className="about-section">
         <div className="container">
-          <div className="about-content">
-            <div className="about-text">
-              <h2>Bienvenue au Resto Pêcheur</h2>
-              <p>
-                {restaurant?.description || 
-                 "Découvrez notre restaurant familial situé au cœur de Tiznit. Nous vous proposons les meilleurs poissons et fruits de mer de la région, ainsi que des spécialités marocaines authentiques préparées avec des produits frais locaux."}
-              </p>
-              <p>
-                Notre chef vous prépare des plats traditionnels dans une ambiance chaleureuse 
-                au cœur de la ville historique de Tiznit.
-              </p>
-            </div>
-            <div className="about-image">
-              <div className="image-placeholder">
-                <span>🐟 poissons </span>
+          <div className="about-content-new">
+            
+            {/* Left side - VIDEO */}
+            <div className="about-left">
+              <div className="video-container">
+                <iframe 
+                  width="100%" 
+                  height="100%"
+                  src="https://player.vimeo.com/video/1097934612?autoplay=1&muted=1&loop=1&autopause=0&background=1&controls=0&title=0&byline=0&portrait=0&dnt=1"
+                  title="Resto Pêcheur - Restaurant Video"
+                  frameBorder="0"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                  style={{ 
+                    borderRadius: '20px',
+                    display: 'block',
+                    width: '100%',
+                    height: '100%'
+                  }}
+                />
+              </div>
+              <div style={{ textAlign: 'center', marginTop: '15px', color: '#666', fontSize: '14px' }}>
+                Découvrez l'ambiance de notre restaurant
               </div>
             </div>
-          </div>
-        </div>
-      </section>
 
-      {/* Section Horaires et Contact */}
-      <section className="info-section">
-        <div className="container">
-          <div className="info-grid">
-            <div className="info-card">
-              <h3>🕐 Horaires d'ouverture</h3>
-              <p>
-                <strong>Tous les jours</strong><br/>
-                {restaurant?.opening_time} - {restaurant?.closing_time}
-              </p>
+            {/* Right side - TEXT and INFO CARDS */}
+            <div className="about-right">
+              {/* Main text section */}
+              <div className="about-text">
+                <h2>Bienvenue au Resto Pêcheur</h2>
+                <p>
+                  {restaurant?.description || 
+                   "Découvrez notre restaurant familial situé au cœur de Tiznit. Nous vous proposons les meilleurs poissons et fruits de mer de la région, ainsi que des spécialités marocaines authentiques préparées avec des produits frais locaux."}
+                </p>
+                <p>
+                  Notre chef vous prépare des plats traditionnels dans une ambiance chaleureuse 
+                  au cœur de la ville historique de Tiznit.
+                </p>
+              </div>
+
+              {/* Info cards row under the text - NOW WITH BACKEND DATA */}
+              <div className="info-cards-row">
+                <div className="info-card-compact">
+                  <h3>🕐 Horaires d'ouverture</h3>
+                  <p>
+                    <strong>Tous les jours</strong><br/>
+                    {restaurant?.opening_time || "12h00"} - {restaurant?.closing_time || "23h00"}
+                  </p>
+                </div>
+                
+                <div className="info-card-compact">
+                  <h3>📍 Adresse</h3>
+                  <p>{restaurant?.address || 'M7RG+RJ3, Bd Mohamed Hafidi, Tiznit 85000'}</p>
+                </div>
+                
+                <div className="info-card-compact">
+                  <h3>📞 Contact</h3>
+                  <p>
+                    <strong>Téléphone:</strong> {restaurant?.phone || "0528 123 456"}<br/>
+                    <strong>Email:</strong> {restaurant?.email || "contact@restopecheur.ma"}
+                  </p>
+                </div>
+              </div>
             </div>
-            
-            <div className="info-card">
-              <h3>📍 Adresse</h3>
-              <p>{restaurant?.address || 'M7RG+RJ3, Bd Mohamed Hafidi, Tiznit 85000'}</p>
-            </div>
-            
-            <div className="info-card">
-              <h3>📞 Contact</h3>
-              <p>
-                <strong>Téléphone:</strong> {restaurant?.phone}<br/>
-                <strong>Email:</strong> {restaurant?.email}
-              </p>
-            </div>
+
           </div>
         </div>
       </section>
@@ -204,7 +239,7 @@ function HomePage() {
             <div className="specialty-card">
               <span className="specialty-icon">🥘</span>
               <h3>Tagines de poisson</h3>
-              <p>Spécialités marocaines aux saveurs authentiques</p>
+              <p>Spécialités marocaines authentiques</p>
             </div>
             
             <div className="specialty-card">
