@@ -1,4 +1,4 @@
-# reservations/views.py - COMPLETE FILE with unified dashboard
+# reservations/views.py - SINGLE RESTAURANT VERSION WITH TIMEZONE FIX
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
@@ -11,33 +11,19 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
-from .models import Restaurant, Reservation, TimeSlot, SpecialDate
+from .models import RestaurantInfo, Reservation, TimeSlot, SpecialDate, get_restaurant_info
 from .serializers import ReservationSerializer, TimeSlotSerializer, RestaurantSerializer
 import json
 
 # ===== API VIEWS FOR FRONTEND (React) =====
 
 class RestaurantDetailView(generics.RetrieveAPIView):
-    """Get restaurant details"""
-    queryset = Restaurant.objects.all()
+    """Get restaurant details - Single Restaurant"""
     serializer_class = RestaurantSerializer
     
     def get_object(self):
-        # Return the first restaurant (assuming single restaurant)
-        restaurant = Restaurant.objects.first()
-        if not restaurant:
-            # Create default restaurant if none exists
-            restaurant = Restaurant.objects.create(
-                name="Resto Pêcheur",
-                address="Tangier, Morocco",
-                phone="+212 XX XX XX XX",
-                email="contact@restopecheur.com",
-                capacity=50,
-                number_of_tables=20,
-                opening_time="12:00",
-                closing_time="23:00"
-            )
-        return restaurant
+        # Always return the single restaurant instance
+        return get_restaurant_info()
 
 class TimeSlotListView(generics.ListAPIView):
     """List all available time slots"""
@@ -67,7 +53,7 @@ class TimeSlotListView(generics.ListAPIView):
         return queryset
 
 class ReservationCreateView(generics.CreateAPIView):
-    """Create new reservation"""
+    """Create new reservation - FIXED TIMEZONE HANDLING"""
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
     
@@ -89,12 +75,25 @@ class ReservationCreateView(generics.CreateAPIView):
             time_str = data['time']
             guests = int(data['number_of_guests'])
             
+            # TIMEZONE FIX: Debug and proper date handling
+            print(f"🔍 DEBUG - Original date from frontend: {date_str}")
+            print(f"🔍 DEBUG - Original time from frontend: {time_str}")
+            print(f"🔍 DEBUG - Current Django timezone: {timezone.get_current_timezone()}")
+            print(f"🔍 DEBUG - Current Django date: {timezone.now().date()}")
+            
             try:
+                # Parse date without timezone conversion
+                # This should preserve the date as-is without timezone adjustment
                 date = datetime.strptime(date_str, '%Y-%m-%d').date()
                 time_obj = datetime.strptime(time_str, '%H:%M').time()
-            except ValueError:
+                
+                print(f"🔍 DEBUG - Parsed date: {date}")
+                print(f"🔍 DEBUG - Parsed time: {time_obj}")
+                
+            except ValueError as e:
+                print(f"❌ ERROR - Date/time parsing failed: {e}")
                 return Response(
-                    {'error': 'Invalid date or time format'}, 
+                    {'error': f'Invalid date or time format: {e}'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
@@ -107,12 +106,14 @@ class ReservationCreateView(generics.CreateAPIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Count existing reservations
+            # Count existing reservations - FIXED: Use French status values
             existing_reservations = Reservation.objects.filter(
                 date=date,
                 time=time_obj,
-                status__in=['pending', 'confirmed']
+                status__in=['En attente', 'Confirmée']
             ).count()
+            
+            print(f"🔍 DEBUG - Existing reservations for {date} at {time_obj}: {existing_reservations}")
             
             if existing_reservations >= time_slot.max_reservations:
                 return Response(
@@ -120,7 +121,7 @@ class ReservationCreateView(generics.CreateAPIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Create the reservation
+            # Create the reservation - FIXED: Use French status value
             reservation = Reservation.objects.create(
                 customer_name=data['customer_name'],
                 customer_email=data['customer_email'],
@@ -129,8 +130,12 @@ class ReservationCreateView(generics.CreateAPIView):
                 time=time_obj,
                 number_of_guests=guests,
                 special_requests=data.get('special_requests', ''),
-                status='pending'
+                status='En attente'  # Changed from 'pending'
             )
+            
+            # Debug: Check what was actually saved
+            print(f"✅ SUCCESS - Reservation created with date: {reservation.date}")
+            print(f"✅ SUCCESS - Reservation ID: {reservation.id}")
             
             return Response({
                 'id': reservation.id,
@@ -146,24 +151,30 @@ class ReservationCreateView(generics.CreateAPIView):
             }, status=status.HTTP_201_CREATED)
             
         except Exception as e:
+            print(f"❌ ERROR in reservation creation: {e}")
+            import traceback
+            print(f"❌ TRACEBACK: {traceback.format_exc()}")
             return Response(
                 {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-# ===== NEW: AVAILABILITY ENDPOINT THAT YOUR FRONTEND NEEDS =====
+# ===== AVAILABILITY ENDPOINT =====
 @csrf_exempt
 def check_availability_by_date(request):
-    """Check availability for a specific date - This is what your frontend calls"""
+    """Check availability for a specific date - FIXED TIMEZONE HANDLING"""
     if request.method == 'GET':
         try:
             date_str = request.GET.get('date')
             if not date_str:
                 return JsonResponse({'error': 'Date parameter required'}, status=400)
             
+            print(f"🔍 DEBUG - Availability check for date: {date_str}")
+            
             # Parse the date
             try:
                 date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                print(f"🔍 DEBUG - Parsed availability date: {date}")
             except ValueError:
                 return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=400)
             
@@ -190,15 +201,17 @@ def check_availability_by_date(request):
             
             availability_data = []
             for slot in time_slots:
-                # Count existing reservations for this date and time
+                # Count existing reservations for this date and time - FIXED: Use French status values
                 existing_reservations = Reservation.objects.filter(
                     date=date,
                     time=slot.time,
-                    status__in=['pending', 'confirmed']
+                    status__in=['En attente', 'Confirmée']
                 ).count()
                 
                 available_spots = slot.max_reservations - existing_reservations
                 is_available = available_spots > 0
+                
+                print(f"🔍 DEBUG - Slot {slot.time}: {existing_reservations}/{slot.max_reservations} reservations")
                 
                 availability_data.append({
                     'time': slot.time.strftime('%H:%M'),
@@ -216,6 +229,7 @@ def check_availability_by_date(request):
             })
             
         except Exception as e:
+            print(f"❌ ERROR in availability check: {e}")
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'GET method required'}, status=405)
@@ -250,11 +264,11 @@ def check_availability(request):
             status=status.HTTP_200_OK
         )
     
-    # Check reservations for this date and time
+    # Check reservations for this date and time - FIXED: Use French status values
     existing_reservations = Reservation.objects.filter(
         date=date,
         time=time,
-        status__in=['pending', 'confirmed']
+        status__in=['En attente', 'Confirmée']
     ).count()
     
     available_spots = max(0, time_slot.max_reservations - existing_reservations)
@@ -269,10 +283,18 @@ def check_availability(request):
 @csrf_exempt
 def api_test(request):
     """Simple test endpoint to verify backend connection"""
+    restaurant = get_restaurant_info()
+    current_tz = timezone.get_current_timezone()
+    current_time = timezone.now()
+    
     return JsonResponse({
         'status': 'success',
         'message': 'Backend connected successfully!',
-        'timestamp': timezone.now().isoformat(),
+        'restaurant': restaurant.name,
+        'timestamp': current_time.isoformat(),
+        'timezone': str(current_tz),
+        'local_date': current_time.date().strftime('%Y-%m-%d'),
+        'local_time': current_time.time().strftime('%H:%M:%S'),
         'method': request.method
     })
 
@@ -291,14 +313,23 @@ class ReservationDetailView(generics.RetrieveUpdateDestroyAPIView):
 @api_view(['GET'])
 @staff_member_required
 def dashboard_stats(request):
-    """Basic dashboard statistics API"""
+    """Basic dashboard statistics API - FIXED: French status values"""
     today = timezone.now().date()
+    restaurant = get_restaurant_info()
     
     stats = {
+        'restaurant_name': restaurant.name,
+        'restaurant_capacity': restaurant.capacity,
+        'restaurant_tables': restaurant.number_of_tables,
         'total_reservations': Reservation.objects.count(),
         'today_reservations': Reservation.objects.filter(date=today).count(),
-        'pending_reservations': Reservation.objects.filter(status='pending').count(),
-        'confirmed_reservations': Reservation.objects.filter(status='confirmed').count(),
+        
+        # FIXED: Use French status values
+        'pending_reservations': Reservation.objects.filter(status='En attente').count(),
+        'confirmed_reservations': Reservation.objects.filter(status='Confirmée').count(),
+        
+        'occupancy_rate': restaurant.get_occupancy_rate_today(),
+        'available_tables': restaurant.get_available_tables_today(),
     }
     
     return JsonResponse(stats)
@@ -306,12 +337,13 @@ def dashboard_stats(request):
 @api_view(['POST'])
 @staff_member_required
 def update_reservation_status(request, reservation_id):
-    """Update reservation status"""
+    """Update reservation status - FIXED: Accept French status values"""
     try:
         reservation = get_object_or_404(Reservation, id=reservation_id)
         new_status = request.data.get('status')
         
-        if new_status in ['pending', 'confirmed', 'cancelled', 'completed']:
+        # Accept both English and French status values for flexibility
+        if new_status in ['pending', 'confirmed', 'cancelled', 'completed', 'En attente', 'Confirmée', 'Annulée', 'Terminée']:
             reservation.status = new_status
             reservation.save()
             return JsonResponse({'success': True, 'status': new_status})
@@ -331,14 +363,21 @@ def dashboard_view(request):
     week_start = today - timedelta(days=today.weekday())
     month_start = today.replace(day=1)
     
-    # Get restaurant instance
-    restaurant = Restaurant.objects.first()
+    # Get restaurant instance (single instance)
+    restaurant = get_restaurant_info()
     
-    # Basic metrics
+    # ADD THIS DEBUG BLOCK:
+    print(f"🔥 DASHBOARD DEBUG - Today's date: {today}")
+    today_reservations_debug = Reservation.objects.filter(date=today).order_by('time')
+    print(f"🔥 DASHBOARD DEBUG - Found {today_reservations_debug.count()} reservations")
+    for res in today_reservations_debug:
+        print(f"🔥 DASHBOARD DEBUG - Reservation: {res.customer_name} at {res.time} (status: {res.status})")
+    
+    # Basic metrics - FIXED: Use French status values
     metrics = {
         'today_reservations': Reservation.objects.filter(date=today).count(),
-        'today_confirmed': Reservation.objects.filter(date=today, status='confirmed').count(),
-        'today_pending': Reservation.objects.filter(date=today, status='pending').count(),
+        'today_confirmed': Reservation.objects.filter(date=today, status='Confirmée').count(),
+        'today_pending': Reservation.objects.filter(date=today, status='En attente').count(),
         'today_guests': Reservation.objects.filter(date=today).aggregate(
             total=Sum('number_of_guests')
         )['total'] or 0,
@@ -346,11 +385,16 @@ def dashboard_view(request):
         'week_reservations': Reservation.objects.filter(date__gte=week_start).count(),
         'month_reservations': Reservation.objects.filter(date__gte=month_start).count(),
         
-        'total_tables': restaurant.number_of_tables if restaurant else 20,
+        'total_tables': restaurant.number_of_tables,
         'available_tables': get_available_tables_count(today, now.time()),
         
         'peak_hour': get_peak_hour_today(today),
         'next_available_slot': get_next_available_slot(),
+        'occupancy_rate': restaurant.get_occupancy_rate_today(),
+        
+        # Restaurant info
+        'restaurant_name': restaurant.name,
+        'restaurant_capacity': restaurant.capacity,
     }
     
     # Recent reservations (last 24 hours)
@@ -366,10 +410,14 @@ def dashboard_view(request):
     # Alerts
     alerts = get_dashboard_alerts(today)
     
-    # Chart data
+    # Chart data - ADD DEBUG HERE TOO:
+    print(f"🔥 DASHBOARD DEBUG - About to call get_daily_time_slots_data")
+    daily_slots_data = get_daily_time_slots_data(today)
+    print(f"🔥 DASHBOARD DEBUG - Chart data returned: {daily_slots_data}")
+    
     chart_data = {
         'weekly_reservations': get_weekly_chart_data(week_start),
-        'daily_time_slots': get_daily_time_slots_data(today),
+        'daily_time_slots': daily_slots_data,
     }
     
     context = {
@@ -378,29 +426,28 @@ def dashboard_view(request):
         'todays_schedule': todays_schedule,
         'alerts': alerts,
         'chart_data': chart_data,
+        'restaurant': restaurant,
     }
     
-    return render(request, 'admin/unified_dashboard.html', context)
+    return render(request, 'admin/unified_dashboard_with_sidebar.html', context)
 
 def get_available_tables_count(date, time):
-    """Calculate available tables for given date and time"""
-    restaurant = Restaurant.objects.first()
-    if not restaurant:
-        return 20
+    """Calculate available tables for given date and time - FIXED: French status values"""
+    restaurant = get_restaurant_info()
     
     # Count reservations for today
     reservations_count = Reservation.objects.filter(
         date=date,
-        status__in=['confirmed', 'pending']
+        status__in=['Confirmée', 'En attente']
     ).count()
     
     return max(0, restaurant.number_of_tables - reservations_count)
 
 def get_peak_hour_today(date):
-    """Find the busiest hour for today"""
+    """Find the busiest hour for today - FIXED: French status values"""
     peak_hour = Reservation.objects.filter(
         date=date,
-        status__in=['pending', 'confirmed']
+        status__in=['En attente', 'Confirmée']
     ).values('time').annotate(
         count=Count('id')
     ).order_by('-count').first()
@@ -410,7 +457,7 @@ def get_peak_hour_today(date):
     return None
 
 def get_next_available_slot():
-    """Find next available time slot"""
+    """Find next available time slot - FIXED: French status values"""
     now = timezone.localtime(timezone.now())
     current_date = now.date()
     current_time = now.time()
@@ -431,7 +478,7 @@ def get_next_available_slot():
             reservations_count = Reservation.objects.filter(
                 date=check_date,
                 time=slot.time,
-                status__in=['confirmed', 'pending']
+                status__in=['Confirmée', 'En attente']
             ).count()
             
             # Check against slot max reservations
@@ -446,7 +493,7 @@ def get_next_available_slot():
     return "Aucun créneau disponible cette semaine"
 
 def get_dashboard_alerts(date):
-    """Generate dashboard alerts"""
+    """Generate dashboard alerts - FIXED: French status values"""
     alerts = []
     
     # Check for overbookings
@@ -455,7 +502,7 @@ def get_dashboard_alerts(date):
         reservations_count = Reservation.objects.filter(
             date=date,
             time=slot.time,
-            status__in=['confirmed', 'pending']
+            status__in=['Confirmée', 'En attente']
         ).count()
         
         if reservations_count > slot.max_reservations:
@@ -544,18 +591,130 @@ def get_weekly_chart_data(week_start):
     }
 
 def get_daily_time_slots_data(date):
-    """Get reservation data by time slots for today"""
-    time_slots = TimeSlot.objects.filter(is_active=True).order_by('time')
-    data = []
-    labels = []
+    """Get reservation data by ACTUAL reservation times for today - CORRECTED VERSION"""
+    from collections import defaultdict
     
+    print(f"🔍 CHART DEBUG - Getting data for date: {date}")
+    
+    # Get all reservations for today
+    todays_reservations = Reservation.objects.filter(date=date).order_by('time')
+    
+    print(f"🔍 CHART DEBUG - Found {todays_reservations.count()} reservations")
+    
+    if not todays_reservations.exists():
+        print("🔍 CHART DEBUG - No reservations, returning empty data")
+        return {
+            'labels': [],
+            'data': []
+        }
+    
+    # Count reservations by actual time - ONLY use actual reservation times
+    time_counts = defaultdict(int)
+    
+    for reservation in todays_reservations:
+        time_str = reservation.time.strftime('%H:%M')
+        time_counts[time_str] += 1
+        print(f"🔍 CHART DEBUG - Reservation: {reservation.customer_name} at {time_str} (status: {reservation.status})")
+    
+    # Sort times and prepare data - CRITICAL: Only include times that have reservations
+    sorted_times = sorted(time_counts.keys())
+    labels = sorted_times
+    data = [time_counts[time] for time in sorted_times]
+    
+    print(f"🔍 CHART DEBUG - Final labels: {labels}")
+    print(f"🔍 CHART DEBUG - Final data: {data}")
+    print(f"🔍 CHART DEBUG - Time counts: {dict(time_counts)}")
+    
+    return {
+        'labels': labels,
+        'data': data
+    }
+
+# ALTERNATIVE VERSION - If you want to show ALL time slots (including empty ones)
+def get_daily_time_slots_data_with_empty_slots(date):
+    """Show ALL configured time slots, even empty ones"""
+    from collections import defaultdict
+    
+    print(f"🔍 CHART DEBUG - Getting data with empty slots for date: {date}")
+    
+    # Get all active time slots
+    time_slots = TimeSlot.objects.filter(is_active=True).order_by('time')
+    
+    if not time_slots.exists():
+        print("🔍 CHART DEBUG - No time slots configured")
+        return {'labels': [], 'data': []}
+    
+    # Initialize all time slots with 0
+    time_counts = {}
     for slot in time_slots:
+        time_str = slot.time.strftime('%H:%M')
+        time_counts[time_str] = 0
+        print(f"🔍 CHART DEBUG - Initialized slot: {time_str}")
+    
+    # Count actual reservations
+    todays_reservations = Reservation.objects.filter(date=date)
+    for reservation in todays_reservations:
+        time_str = reservation.time.strftime('%H:%M')
+        if time_str in time_counts:  # Only count if it's a valid time slot
+            time_counts[time_str] += 1
+            print(f"🔍 CHART DEBUG - Added reservation: {reservation.customer_name} at {time_str}")
+    
+    # Sort and return
+    sorted_times = sorted(time_counts.keys())
+    labels = sorted_times
+    data = [time_counts[time] for time in sorted_times]
+    
+    print(f"🔍 CHART DEBUG - All slots - Labels: {labels}")
+    print(f"🔍 CHART DEBUG - All slots - Data: {data}")
+    
+    return {
+        'labels': labels,
+        'data': data
+    }
+
+def get_daily_time_slots_data_with_all_slots(date):
+    """Get reservation data showing ALL time slots (including empty ones)"""
+    
+    # Get all active time slots
+    time_slots = TimeSlot.objects.filter(is_active=True).order_by('time')
+    
+    # Also get any actual reservation times that might not be in TimeSlot model
+    actual_reservation_times = Reservation.objects.filter(
+        date=date
+    ).values_list('time', flat=True).distinct().order_by('time')
+    
+    # Combine all times
+    all_times = set()
+    
+    # Add time slots
+    for slot in time_slots:
+        all_times.add(slot.time)
+    
+    # Add actual reservation times
+    for res_time in actual_reservation_times:
+        all_times.add(res_time)
+    
+    # Sort all times
+    sorted_times = sorted(all_times)
+    
+    labels = []
+    data = []
+    
+    for time_obj in sorted_times:
+        time_str = time_obj.strftime('%H:%M')
+        labels.append(time_str)
+        
+        # Count actual reservations for this time
         count = Reservation.objects.filter(
             date=date,
-            time=slot.time
+            time=time_obj
         ).count()
         data.append(count)
-        labels.append(slot.time.strftime('%H:%M'))
+        
+        print(f"🔍 DEBUG - Time slot {time_str}: {count} reservations")
+    
+    print(f"🔍 DEBUG - Final chart labels: {labels}")
+    print(f"🔍 DEBUG - Final chart data: {data}")
     
     return {
         'labels': labels,
@@ -589,20 +748,28 @@ def get_monthly_trends_data():
 # API endpoints for AJAX updates
 @staff_member_required
 def dashboard_api_metrics(request):
-    """API endpoint for real-time metrics"""
+    """API endpoint for real-time metrics - FIXED: French status values"""
     today = timezone.now().date()
     now = timezone.now()
+    restaurant = get_restaurant_info()
     
     metrics = {
+        'restaurant_name': restaurant.name,
         'today_reservations': Reservation.objects.filter(date=today).count(),
         'today_guests': Reservation.objects.filter(date=today).aggregate(
             total=Sum('number_of_guests')
         )['total'] or 0,
         'available_tables': get_available_tables_count(today, now.time()),
+        
+        # FIXED: Use French status values
         'pending_reservations': Reservation.objects.filter(
             date=today, 
-            status='pending'
+            status='En attente'
         ).count(),
+        
+        'occupancy_rate': restaurant.get_occupancy_rate_today(),
+        'total_capacity': restaurant.capacity,
+        'total_tables': restaurant.number_of_tables,
     }
     
     return JsonResponse(metrics)
@@ -625,3 +792,46 @@ def dashboard_api_recent(request):
         })
     
     return JsonResponse({'recent_reservations': data})
+
+# ===== RESTAURANT INFO API =====
+@api_view(['GET'])
+def restaurant_info(request):
+    """Get restaurant information"""
+    restaurant = get_restaurant_info()
+    
+    return JsonResponse({
+        'name': restaurant.name,
+        'address': restaurant.address,
+        'phone': restaurant.phone,
+        'email': restaurant.email,
+        'description': restaurant.description,
+        'capacity': restaurant.capacity,
+        'number_of_tables': restaurant.number_of_tables,
+        'opening_time': restaurant.opening_time.strftime('%H:%M'),
+        'closing_time': restaurant.closing_time.strftime('%H:%M'),
+        'occupancy_rate_today': restaurant.get_occupancy_rate_today(),
+        'available_tables_today': restaurant.get_available_tables_today(),
+    })
+
+# ===== TIMEZONE DEBUG ENDPOINT =====
+@csrf_exempt
+def timezone_debug(request):
+    """Debug endpoint to check timezone handling"""
+    now_utc = timezone.now()
+    now_local = timezone.localtime(now_utc)
+    
+    return JsonResponse({
+        'server_timezone': str(timezone.get_current_timezone()),
+        'utc_time': now_utc.isoformat(),
+        'local_time': now_local.isoformat(),
+        'utc_date': now_utc.date().strftime('%Y-%m-%d'),
+        'local_date': now_local.date().strftime('%Y-%m-%d'),
+        'django_settings': {
+            'USE_TZ': True,  # Should be True
+            'TIME_ZONE': 'Africa/Casablanca'
+        },
+        'test_date_parsing': {
+            'input': '2025-07-18',
+            'parsed': datetime.strptime('2025-07-18', '%Y-%m-%d').date().strftime('%Y-%m-%d')
+        }
+    })

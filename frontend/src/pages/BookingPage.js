@@ -26,6 +26,15 @@ function BookingPage() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [showMenuSelector, setShowMenuSelector] = useState(false);
 
+  // FIXED: Date formatting function to avoid timezone issues
+  const formatDateForAPI = (date) => {
+    if (!date) return null;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Récupérer les créneaux horaires
   useEffect(() => {
     fetch('http://127.0.0.1:8000/api/timeslots/')
@@ -53,10 +62,12 @@ function BookingPage() {
       });
   }, []);
 
-  // Vérifier la disponibilité quand la date change
+  // FIXED: Vérifier la disponibilité quand la date change
   useEffect(() => {
     if (formData.date) {
-      const dateString = formData.date.toISOString().split('T')[0];
+      const dateString = formatDateForAPI(formData.date);
+      console.log('🔍 DEBUG - Checking availability for date:', dateString);
+      console.log('🔍 DEBUG - Selected date object:', formData.date);
       
       fetch(`http://127.0.0.1:8000/api/availability/?date=${dateString}`)
         .then(response => {
@@ -131,6 +142,9 @@ function BookingPage() {
   };
 
   const handleDateChange = (date) => {
+    console.log('🔍 DEBUG - Date selected from calendar:', date);
+    console.log('🔍 DEBUG - Date will be formatted as:', formatDateForAPI(date));
+    
     setSelectedDate(date);
     setFormData(prev => ({
       ...prev,
@@ -166,24 +180,33 @@ function BookingPage() {
     setShowMenuSelector(true);
   };
 
+  // FIXED: Handle submit with proper date formatting
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      // Préparer les données avec la date au format string
+      // FIXED: Préparer les données avec la date au format string sans timezone
+      const formattedDate = formatDateForAPI(formData.date);
+      
+      console.log('🔍 DEBUG - Original date object:', formData.date);
+      console.log('🔍 DEBUG - Formatted date for API:', formattedDate);
+      console.log('🔍 DEBUG - Selected time:', formData.time);
+
       const reservationData = {
         customer_name: formData.customer_name,
         customer_email: formData.customer_email,
         customer_phone: formData.customer_phone,
-        date: formData.date.toISOString().split('T')[0],
+        date: formattedDate, // FIXED: Use proper date formatting
         time: formData.time,
         number_of_guests: formData.number_of_guests,
         special_requests: formData.wants_preorder 
           ? `${formData.special_requests}\n\nPré-commande:\n${formData.selected_dishes.map(d => `${d.name} x${d.quantity} (${d.price * d.quantity} DH)`).join('\n')}`
           : formData.special_requests
       };
+
+      console.log('🔍 DEBUG - Complete reservation data being sent:', reservationData);
 
       const response = await fetch('http://127.0.0.1:8000/api/reservations/create/', {
         method: 'POST',
@@ -196,6 +219,8 @@ function BookingPage() {
       if (response.ok) {
         const reservation = await response.json();
         
+        console.log('✅ SUCCESS - Reservation created:', reservation);
+        
         // Make sure we have all the data needed for confirmation
         const confirmationData = {
           ...reservation,
@@ -203,7 +228,7 @@ function BookingPage() {
           customer_name: reservation.customer_name || formData.customer_name,
           customer_email: reservation.customer_email || formData.customer_email,
           customer_phone: reservation.customer_phone || formData.customer_phone,
-          date: reservation.date || formData.date.toISOString().split('T')[0],
+          date: reservation.date || formattedDate, // Use the formatted date
           time: reservation.time || formData.time,
           number_of_guests: reservation.number_of_guests || formData.number_of_guests,
           special_requests: reservation.special_requests || formData.special_requests
@@ -218,11 +243,12 @@ function BookingPage() {
         });
       } else {
         const errorData = await response.json();
-        setError(errorData.message || 'Erreur lors de la réservation');
+        console.error('❌ ERROR - Reservation failed:', errorData);
+        setError(errorData.message || errorData.error || 'Erreur lors de la réservation');
       }
     } catch (error) {
+      console.error('❌ ERROR - Network or other error:', error);
       setError('Erreur de connexion. Veuillez réessayer.');
-      console.error('Erreur:', error);
     } finally {
       setLoading(false);
     }
@@ -330,6 +356,10 @@ function BookingPage() {
                         month: 'long', 
                         day: 'numeric' 
                       })}
+                      <br />
+                      <small style={{color: '#666'}}>
+                        Envoyé à l'API comme : {formatDateForAPI(selectedDate)}
+                      </small>
                     </p>
                   )}
                 </div>

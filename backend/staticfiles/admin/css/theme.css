@@ -1,0 +1,18 @@
+/* TEST CSS - THIS SHOULD MAKE THE SIDEBAR BRIGHT RED */
+.main-sidebar {
+    background: red !important;
+}
+
+/* TEST - MAKE ALL TEXT GREEN */
+.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link {
+    color: lime !important;
+    background: blue !important;
+}
+
+/* TEST - HIDE THE ENTIRE LOGO AREA */
+.brand-link {
+    background: yellow !important;
+    min-height: 200px !important;
+}
+
+/* IF THESE CHANGES DON'T SHOW, THE CSS ISN'T LOADING */

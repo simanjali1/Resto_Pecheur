@@ -1,13 +1,79 @@
 {% extends "admin/base_site.html" %}
 {% load static %}
 
-{% block title %}Tableau de Bord Unifié - Resto Pêcheur{% endblock %}
+{% block title %}Administration{% endblock %}
 
 {% block extrahead %}
     {{ block.super }}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
-        /* FIXED: Override admin layout issues */
+        /* REMOVE ALL CUSTOM NAVBAR STYLING - USE DEFAULT ADMIN NAVBAR */
+        /* No custom navbar styling - let Django admin handle it naturally */
+        
+        /* FIX SIDEBAR COLLAPSE ISSUE */
+        body.sidebar-collapse .main-sidebar {
+            margin-left: 0 !important;
+            transform: none !important;
+        }
+
+        .main-sidebar {
+            width: 250px !important;
+            margin-left: 0 !important;
+            transform: none !important;
+            background: #333354d0 !important;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* FORCE SIDEBAR TEXT TO SHOW */
+        .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link p {
+            display: inline !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        /* SIDEBAR NAVIGATION STYLING */
+        .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            border-radius: 8px;
+            margin: 3px 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link:hover {
+            background-color: rgba(203, 81, 3, 0.2) !important;
+            color: white !important;
+            transform: translateX(5px);
+        }
+
+        .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active,
+        .sidebar-dark-primary .nav-sidebar > .nav-item.menu-open > .nav-link {
+            background: linear-gradient(45deg, #cb5103, #ff7043) !important;
+            color: white !important;
+            border-radius: 8px;
+            margin: 3px 10px;
+            box-shadow: 0 4px 8px rgba(203, 81, 3, 0.4);
+        }
+
+        /* Clean sidebar spacing */
+        .main-sidebar .nav-sidebar {
+            margin-top: 15px !important;
+            padding-top: 10px !important;
+        }
+
+        /* ENSURE CONTENT AREA ADJUSTS TO SIDEBAR WIDTH */
+        body:not(.sidebar-collapse) .content-wrapper {
+            margin-left: 250px !important;
+            transition: margin-left 0.3s ease !important;
+        }
+
+        body.sidebar-collapse .content-wrapper {
+            margin-left: 70px !important;
+            transition: margin-left 0.3s ease !important;
+        }
+
+        /* DASHBOARD CONTENT STYLING */
         #content {
             margin: 0 !important;
             padding: 0 !important;
@@ -15,7 +81,7 @@
         
         .dashboard-container {
             padding: 20px;
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e8e8f0 100%);
             min-height: 100vh;
             width: 100%;
             box-sizing: border-box;
@@ -23,8 +89,11 @@
         }
 
         .dashboard-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, #ffffff 0%, #cb5003 105%);
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9); /* Stronger, clearer shadow */
+            font-weight: 600; /* Bolder text */
+            font-size: 1.5rem; /* Slightly larger text */
             padding: 20px 25px;
             border-radius: 12px;
             margin-bottom: 25px;
@@ -34,13 +103,19 @@
         .dashboard-header h2 {
             margin: 0;
             font-size: 1.8rem;
-            font-weight: 600;
+            font-weight: 800;
         }
 
         .dashboard-subtitle {
             margin: 5px 0 0 0;
             opacity: 0.9;
             font-size: 0.95rem;
+        }
+
+        .restaurant-info {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            opacity: 0.8;
         }
 
         .live-time {
@@ -74,10 +149,11 @@
             transform: translateY(-2px);
         }
 
-        .metric-card.today-reservations { border-left-color: #667eea; }
-        .metric-card.today-guests { border-left-color: #764ba2; }
-        .metric-card.available-tables { border-left-color: #4fc3f7; }
-        .metric-card.peak-hour { border-left-color: #ff8a65; }
+        .metric-card.today-reservations { border-left-color: #333354d0; }
+        .metric-card.today-guests { border-left-color: #cb5103; }
+        .metric-card.available-tables { border-left-color: #333354d0; }
+        .metric-card.peak-hour { border-left-color: #cb5103; }
+        .metric-card.occupancy { border-left-color: #333354d0; }
 
         .metric-icon {
             font-size: 1.8rem;
@@ -91,10 +167,11 @@
             flex-shrink: 0;
         }
 
-        .today-reservations .metric-icon { background: linear-gradient(135deg, #667eea, #764ba2); }
-        .today-guests .metric-icon { background: linear-gradient(135deg, #764ba2, #667eea); }
-        .available-tables .metric-icon { background: linear-gradient(135deg, #4fc3f7, #29b6f6); }
-        .peak-hour .metric-icon { background: linear-gradient(135deg, #ff8a65, #ff7043); }
+        .today-reservations .metric-icon { background: linear-gradient(135deg, #333354d0, #333354); }
+        .today-guests .metric-icon { background: linear-gradient(135deg, #cb5103, #ff7043); }
+        .available-tables .metric-icon { background: linear-gradient(135deg, #333354d0, #333354); }
+        .peak-hour .metric-icon { background: linear-gradient(135deg, #cb5103, #ff7043); }
+        .occupancy .metric-icon { background: linear-gradient(135deg, #333354d0, #333354); }
 
         .metric-content {
             flex: 1;
@@ -145,10 +222,11 @@
             color: #2c3e50;
         }
 
-        .action-btn.primary { border-left-color: #667eea; }
+        .action-btn.primary { border-left-color: #333354d0; }
         .action-btn.secondary { border-left-color: #6c757d; }
+        .action-btn.restaurant { border-left-color: #cb5103; }
 
-        /* FIXED: Better responsive layout */
+        /* DASHBOARD LAYOUT */
         .dashboard-content {
             display: grid;
             grid-template-columns: 1fr;
@@ -180,14 +258,14 @@
         .card-header {
             padding: 12px 16px;
             border-bottom: 1px solid #f0f0f0;
-            background: #fafafa;
+            background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
         }
 
         .card-header h3 {
             margin: 0;
             font-size: 1rem;
             font-weight: 600;
-            color: #2c3e50;
+            color: #333354;
         }
 
         .chart-container {
@@ -221,7 +299,7 @@
 
         .stat-value {
             font-weight: 600;
-            color: #2c3e50;
+            color: #333354;
         }
 
         .schedule-item {
@@ -243,7 +321,7 @@
 
         .schedule-time {
             font-weight: 600;
-            color: #667eea;
+            color: #333354d0;
             min-width: 60px;
         }
 
@@ -270,10 +348,29 @@
         }
 
         .status-pending { background: #fff3cd; color: #856404; }
-        .status-confirmed { background: #d4edda; color: #155724; }
-        .status-cancelled { background: #f8d7da; color: #721c24; }
+        .status-confirmed { background: rgba(203, 81, 3, 0.1); color: #cb5103; }
+        .status-cancelled { background: rgba(51, 51, 84, 0.1); color: #333354; }
 
-        /* FIXED: Responsive design */
+        /* Restaurant info highlight */
+        .restaurant-stats {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 15px;
+        }
+
+        .restaurant-stats-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.8rem;
+        }
+
+        .restaurant-stats-row:last-child {
+            margin-bottom: 0;
+        }
+
+        /* RESPONSIVE DESIGN */
         @media (max-width: 1200px) {
             .charts-row {
                 grid-template-columns: 1fr;
@@ -311,6 +408,10 @@
             .metric-number {
                 font-size: 1.3rem;
             }
+
+            .restaurant-stats {
+                margin-top: 10px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -328,8 +429,29 @@
 {% block content %}
 <div class="dashboard-container">
     <div class="dashboard-header">
-        <h2>🦐 Administration - Resto Pêcheur</h2>
+        <h2> 🦐 Administration Dashboard</h2>
         <p class="dashboard-subtitle">Interface de gestion des réservations et contrôle du restaurant</p>
+        
+        <!-- Restaurant Information Display -->
+        {% if metrics.restaurant_name %}
+        <div class="restaurant-stats">
+            <div class="restaurant-stats-row">
+                <span>📍 Capacité totale:</span>
+                <span>{{ metrics.restaurant_capacity|default:50 }} couverts</span>
+            </div>
+            <div class="restaurant-stats-row">
+                <span>🍽️ Nombre de tables:</span>
+                <span>{{ metrics.total_tables|default:20 }} tables</span>
+            </div>
+            {% if metrics.restaurant_phone %}
+            <div class="restaurant-stats-row">
+                <span>📞 Contact:</span>
+                <span>{{ metrics.restaurant_phone }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        
         <div class="live-time">
             <span id="current-time"></span>
         </div>
@@ -361,6 +483,14 @@
             </div>
         </div>
         
+        <div class="metric-card occupancy">
+            <div class="metric-icon">📊</div>
+            <div class="metric-content">
+                <span class="metric-number">{{ metrics.occupancy_rate|default:0 }}%</span>
+                <span class="metric-label">Taux d'Occupation</span>
+            </div>
+        </div>
+        
         <div class="metric-card peak-hour">
             <div class="metric-icon">⏰</div>
             <div class="metric-content">
@@ -377,6 +507,9 @@
         </a>
         <a href="/admin/reservations/reservation/" class="action-btn secondary">
             📋 Liste des Réservations
+        </a>
+        <a href="/admin/reservations/restaurantinfo/1/change/" class="action-btn restaurant">
+            ⚙️ Paramètres Restaurant
         </a>
         <a href="/admin/reservations/timeslot/" class="action-btn secondary">
             ⏰ Créneaux Horaires
@@ -433,7 +566,7 @@
 
         <div class="card">
             <div class="card-header">
-                <h3>📊 Statistiques Rapides</h3>
+                <h3>📊 Statistiques Restaurant</h3>
             </div>
             <div>
                 <div class="stat-item">
@@ -508,10 +641,14 @@ function updateTime() {
 updateTime();
 setInterval(updateTime, 1000);
 
-// Chart colors
+// Chart colors using your custom colors
 const chartColors = {
-    primary: '#667eea',
-    secondary: '#764ba2',
+    primary: '#333354d0',
+    secondary: '#cb5103',
+    primaryRGB: 'rgba(51, 51, 84, 0.8)',
+    secondaryRGB: 'rgba(203, 81, 3, 0.8)',
+    primaryLight: 'rgba(51, 51, 84, 0.2)',
+    secondaryLight: 'rgba(203, 81, 3, 0.2)'
 };
 
 // Weekly reservations chart
@@ -525,7 +662,7 @@ if (weeklyCtx) {
                 label: 'Réservations',
                 data: {{ chart_data.weekly_reservations.data|safe }},
                 borderColor: chartColors.primary,
-                backgroundColor: chartColors.primary + '20',
+                backgroundColor: chartColors.primaryLight,
                 borderWidth: 3,
                 fill: true,
                 tension: 0.4,
@@ -561,46 +698,122 @@ if (weeklyCtx) {
     });
 }
 
-// Daily time slots chart
+// Daily time slots chart - FIXED VERSION to prevent auto-scaling
 const dailyCtx = document.getElementById('dailyTimeSlotsChart');
 if (dailyCtx) {
-    new Chart(dailyCtx, {
-        type: 'bar',
-        data: {
-            labels: {{ chart_data.daily_time_slots.labels|safe }},
-            datasets: [{
-                label: 'Réservations',
-                data: {{ chart_data.daily_time_slots.data|safe }},
-                backgroundColor: chartColors.secondary,
-                borderColor: chartColors.primary,
-                borderWidth: 1,
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
+    // Get the raw data from Django
+    const rawChartLabels = {{ chart_data.daily_time_slots.labels|safe }};
+    const rawChartData = {{ chart_data.daily_time_slots.data|safe }};
+    
+    // Debug: Log what we get from Django
+    console.log('🔍 DJANGO DATA - Labels:', rawChartLabels);
+    console.log('🔍 DJANGO DATA - Data:', rawChartData);
+    
+    // Check if we have data
+    if (!rawChartLabels || rawChartLabels.length === 0) {
+        console.log('❌ No data for chart');
+        // Show empty state
+        const chartContainer = dailyCtx.parentElement;
+        chartContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;">Aucune réservation aujourd\'hui</div>';
+    } else {
+        console.log('✅ Creating chart with data:', rawChartLabels, rawChartData);
+        
+        new Chart(dailyCtx, {
+            type: 'bar',
+            data: {
+                labels: rawChartLabels,  // Should be exactly ["17:00"]
+                datasets: [{
+                    label: 'Réservations',
+                    data: rawChartData,    // Should be exactly [1]
+                    backgroundColor: chartColors.secondary,
+                    borderColor: chartColors.primary,
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.9
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 1,
-                        precision: 0,
-                        callback: function(value) {
-                            return Number.isInteger(value) ? value : '';
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                console.log('🔍 TOOLTIP - Context:', context[0]);
+                                return 'Créneau: ' + context[0].label;
+                            },
+                            label: function(context) {
+                                return context.parsed.y + ' réservation' + (context.parsed.y > 1 ? 's' : '');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        suggestedMax: Math.max(5, Math.max(...rawChartData) + 1),
+                        ticks: {
+                            stepSize: 1,
+                            precision: 0,
+                            callback: function(value) {
+                                return Number.isInteger(value) ? value : '';
+                            }
+                        },
+                        grid: { 
+                            color: 'rgba(0,0,0,0.1)',
+                            drawTicks: true
+                        },
+                        title: {
+                            display: true,
+                            text: 'Nombre de réservations',
+                            font: { size: 12, weight: 'bold' }
                         }
                     },
-                    grid: { color: 'rgba(0,0,0,0.1)' }
+                    x: {
+                        type: 'category',  // CRITICAL: Force category scale
+                        grid: { display: false },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45,
+                            font: { size: 11 },
+                            // Remove the callback that might be causing issues
+                        },
+                        title: {
+                            display: true,
+                            text: 'Créneaux horaires',
+                            font: { size: 12, weight: 'bold' }
+                        }
+                    }
                 },
-                x: {
-                    grid: { display: false }
+                layout: {
+                    padding: { top: 10, bottom: 10 }
+                },
+                // Add interaction debugging
+                onHover: function(event, activeElements) {
+                    if (activeElements && activeElements.length > 0) {
+                        const element = activeElements[0];
+                        const dataIndex = element.index;
+                        const label = rawChartLabels[dataIndex];
+                        const value = rawChartData[dataIndex];
+                        console.log('🔍 HOVER - Index:', dataIndex, 'Label:', label, 'Value:', value);
+                    }
+                },
+                onClick: function(event, activeElements) {
+                    if (activeElements && activeElements.length > 0) {
+                        const element = activeElements[0];
+                        const dataIndex = element.index;
+                        const label = rawChartLabels[dataIndex];
+                        console.log('🔍 CLICK - Clicked on:', label, 'at index:', dataIndex);
+                    }
                 }
             }
-        }
-    });
+        });
+        
+        // Log final confirmation
+        console.log('✅ CHART CREATED - Should show bar at:', rawChartLabels[0]);
+    }
 }
 </script>
 {% endblock %}

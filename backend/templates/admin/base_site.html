@@ -1,0 +1,197 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}Administration{% endblock %}
+
+{% block branding %}
+<!-- EMPTY -->
+{% endblock %}
+
+{% block nav-global %}
+<!-- EMPTY -->
+{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        /* CREATE CLEAN NAVIGATION BAR */
+        
+        /* Hide existing branding */
+        #branding,
+        #branding h1,
+        #branding h1 a,
+        h1#site-name,
+        h1#site-name a {
+            display: none !important;
+        }
+        
+        /* Create custom header */
+        #header {
+            background: #417690 !important;
+            height: 50px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            padding: 0 20px !important;
+            position: relative !important;
+        }
+        
+        /* Hide default header content */
+        #header > *:not(.custom-nav) {
+            display: none !important;
+        }
+        
+        /* Custom navigation container */
+        .custom-nav {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 50px;
+        }
+        
+        /* Navigation icons */
+        .nav-hamburger,
+        .nav-user {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+        
+        .nav-hamburger:hover,
+        .nav-user:hover {
+            opacity: 0.8;
+        }
+        
+        /* Sidebar user info removal */
+        .main-sidebar .user-panel,
+        .sidebar .user-panel {
+            display: none !important;
+        }
+        
+        /* Adjust content for header */
+        #main {
+            margin-top: 0 !important;
+        }
+
+        /* SIDEBAR COLLAPSE STYLES */
+        /* EXPANDED SIDEBAR */
+        body:not(.sidebar-collapse) .main-sidebar {
+            width: 250px !important;
+            margin-left: 0 !important;
+            transform: none !important;
+        }
+
+        /* COLLAPSED SIDEBAR - NARROW WITH ICONS ONLY */
+        body.sidebar-collapse .main-sidebar {
+            width: 70px !important;
+            margin-left: 0 !important;
+            transform: none !important;
+        }
+
+        /* COLLAPSED STATE - HIDE TEXT, SHOW ONLY ICONS */
+        body.sidebar-collapse .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link p {
+            display: none !important;
+        }
+
+        body.sidebar-collapse .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link {
+            text-align: center !important;
+            padding: 10px 5px !important;
+            margin: 3px 5px !important;
+        }
+
+        body.sidebar-collapse .nav-icon {
+            margin-right: 0 !important;
+        }
+
+        /* EXPANDED STATE - SHOW TEXT AND ICONS */
+        body:not(.sidebar-collapse) .sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link p {
+            display: inline !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        /* CONTENT AREA ADJUSTMENT */
+        body:not(.sidebar-collapse) .content-wrapper {
+            margin-left: 250px !important;
+            transition: margin-left 0.3s ease !important;
+        }
+
+        body.sidebar-collapse .content-wrapper {
+            margin-left: 70px !important;
+            transition: margin-left 0.3s ease !important;
+        }
+
+        /* SIDEBAR TRANSITION */
+        .main-sidebar {
+            transition: width 0.3s ease !important;
+        }
+    </style>
+{% endblock %}
+
+{% block header %}
+<div id="header">
+    <div class="custom-nav">
+        <button class="nav-hamburger" onclick="toggleSidebar()">☰</button>
+        <button class="nav-user" onclick="showUserMenu()">👤</button>
+    </div>
+</div>
+
+<script>
+function toggleSidebar() {
+    // Get the body element which controls sidebar state
+    const body = document.body;
+    
+    // Toggle the sidebar-collapse class
+    if (body.classList.contains('sidebar-collapse')) {
+        body.classList.remove('sidebar-collapse');
+        body.classList.add('sidebar-open');
+        console.log('Sidebar expanded');
+    } else {
+        body.classList.add('sidebar-collapse');
+        body.classList.remove('sidebar-open');
+        console.log('Sidebar collapsed');
+    }
+}
+
+function showUserMenu() {
+    // Add user menu functionality
+    const userMenu = `
+        <div style="position: fixed; top: 55px; right: 20px; background: white; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; min-width: 150px;">
+            <a href="/admin/auth/user/{{ user.pk }}/change/" style="display: block; padding: 10px 15px; color: #333; text-decoration: none; border-bottom: 1px solid #eee;">Profile</a>
+            <a href="/admin/logout/" style="display: block; padding: 10px 15px; color: #333; text-decoration: none;">Logout</a>
+        </div>
+    `;
+    
+    // Remove existing menu
+    const existingMenu = document.querySelector('.user-dropdown-menu');
+    if (existingMenu) {
+        existingMenu.remove();
+    } else {
+        // Create new menu
+        const menuDiv = document.createElement('div');
+        menuDiv.className = 'user-dropdown-menu';
+        menuDiv.innerHTML = userMenu;
+        document.body.appendChild(menuDiv);
+        
+        // Close menu when clicking outside
+        setTimeout(() => {
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.nav-user') && !e.target.closest('.user-dropdown-menu')) {
+                    const menu = document.querySelector('.user-dropdown-menu');
+                    if (menu) menu.remove();
+                }
+            }, { once: true });
+        }, 100);
+    }
+}
+</script>
+{% endblock %}
