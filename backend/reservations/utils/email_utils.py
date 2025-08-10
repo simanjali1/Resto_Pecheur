@@ -24,7 +24,7 @@ Nous avons hâte de vous accueillir au Resto Pêcheur!
 
 Cordialement,
 L'équipe Resto Pêcheur
-📍 Adresse: Tangier, Morocco
+📍 Adresse: Route De Tafraout Quartier Industriel, Tiznit 85000 Maroc
 📞 Téléphone: 0661-460593
 🌐 Site web: www.restopecheur.ma
         """
@@ -104,7 +104,7 @@ Votre demande est actuellement en cours d'examen. Nous vous notifierons dès qu'
 
 Cordialement,
 L'équipe Resto Pêcheur
-📍 Adresse: Tangier, Morocco
+📍 Adresse: Route De Tafraout Quartier Industriel, Tiznit 85000 Maroc
 📞 Téléphone: 0661-460593
 🌐 Site web: www.restopecheur.ma
         """
@@ -146,7 +146,7 @@ En cas d'imprévu, merci de nous contacter au 0661-460593.
 
 À bientôt,
 L'équipe Resto Pêcheur
-📍 Adresse: Tangier, Morocco
+📍 Adresse: Route De Tafraout Quartier Industriel, Tiznit 85000 Maroc
         """
         
         send_mail(

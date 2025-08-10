@@ -389,3 +389,56 @@ body.dark-mode .main-sidebar {
         transform: translateX(0);
     }
 }
+/* ==========================================
+   STRONGER BUTTON COLOR OVERRIDES - RESTO PÊCHEUR BRAND
+   ========================================== */
+
+/* PRIMARY BUTTONS - More specific selectors to override Jazzmin */
+body .btn-success,
+body input[type="submit"].btn-success,
+body .submit-row input[type="submit"],
+body .submit-row input[type="submit"].default,
+.jazzmin-wrapper .btn-success,
+.content-wrapper .btn-success,
+.card-body .btn-success {
+    background-color: #cb5103 !important;
+    background-image: none !important;
+    border-color: #cb5103 !important;
+    color: white !important;
+}
+
+body .btn-success:hover,
+body .btn-success:focus,
+body .btn-success:active,
+body .btn-success.active,
+.jazzmin-wrapper .btn-success:hover {
+    background-color: #a0420f !important;
+    background-image: none !important;
+    border-color: #a0420f !important;
+    color: white !important;
+    box-shadow: 0 0 0 0.2rem rgba(203, 81, 3, 0.25) !important;
+}
+
+/* SECONDARY BUTTONS - More specific selectors */
+body .btn-info,
+body .submit-row .btn-info,
+.jazzmin-wrapper .btn-info,
+.content-wrapper .btn-info,
+.card-body .btn-info {
+    background-color: #333354 !important;
+    background-image: none !important;
+    border-color: #333354 !important;
+    color: white !important;
+}
+
+body .btn-info:hover,
+body .btn-info:focus,
+body .btn-info:active,
+body .btn-info.active,
+.jazzmin-wrapper .btn-info:hover {
+    background-color: #262640 !important;
+    background-image: none !important;
+    border-color: #262640 !important;
+    color: white !important;
+    box-shadow: 0 0 0 0.2rem rgba(51, 51, 84, 0.25) !important;
+}

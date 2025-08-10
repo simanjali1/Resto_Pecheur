@@ -7,7 +7,7 @@ function ConfirmationPage() {
   const navigate = useNavigate();
   
   // Récupérer les données de la réservation depuis la navigation
-  const { reservation, message } = location.state || {};
+  const { reservation } = location.state || {};
 
   // Si pas de données, rediriger vers l'accueil
   if (!reservation) {
@@ -73,19 +73,30 @@ function ConfirmationPage() {
     );
   };
 
+  // Since users have no accounts, they only see this page once after booking (always pending)
+  const headerContent = {
+    icon: '⏳',
+    title: 'Demande de réservation envoyée !',
+    message: 'Votre demande a bien été reçue. Vous recevrez une réponse par email sous peu. Nous avons hâte de vous accueillir !',
+    headerClass: 'confirmation-header pending'
+  };
+
   // Debug: log the reservation data
   console.log('Reservation data in ConfirmationPage:', reservation);
+  console.log('Phone number specifically:', reservation.customer_phone);
+  console.log('All reservation keys:', Object.keys(reservation || {}));
+  console.log('Full reservation object:', JSON.stringify(reservation, null, 2));
 
   return (
     <div className="confirmation-page">
       <div className="container">
         <div className="confirmation-card">
           {/* Header de confirmation */}
-          <div className="confirmation-header">
-            <div className="success-icon">✅</div>
-            <h1>Réservation confirmée !</h1>
+          <div className={headerContent.headerClass}>
+            <div className="success-icon">{headerContent.icon}</div>
+            <h1>{headerContent.title}</h1>
             <p className="confirmation-message">
-              {message || 'Votre demande de réservation a été enregistrée avec succès.'}
+              {headerContent.message}
             </p>
           </div>
 
@@ -93,12 +104,8 @@ function ConfirmationPage() {
           <div className="reservation-details">
             <h2>Détails de votre réservation</h2>
             
-            <div className="details-grid">
-              <div className="detail-item">
-                <span className="detail-label">Numéro de réservation</span>
-                <span className="detail-value">#{reservation.id || 'N/A'}</span>
-              </div>
-
+            {/* First row - 4 items */}
+            <div className="details-row">
               <div className="detail-item">
                 <span className="detail-label">Statut</span>
                 <span className="detail-value">
@@ -113,7 +120,9 @@ function ConfirmationPage() {
 
               <div className="detail-item">
                 <span className="detail-label">Téléphone</span>
-                <span className="detail-value">{reservation.customer_phone || 'Non spécifié'}</span>
+                <span className="detail-value">
+                  {reservation.customer_phone || 'Non spécifié'}
+                </span>
               </div>
 
               {reservation.customer_email && (
@@ -122,7 +131,10 @@ function ConfirmationPage() {
                   <span className="detail-value">{reservation.customer_email}</span>
                 </div>
               )}
+            </div>
 
+            {/* Second row - 3 items centered */}
+            <div className="details-row centered-three">
               <div className="detail-item highlight">
                 <span className="detail-label">Date</span>
                 <span className="detail-value">{formatDate(reservation.date)}</span>
@@ -139,14 +151,17 @@ function ConfirmationPage() {
                   {reservation.number_of_guests || 1} personne{(reservation.number_of_guests || 1) > 1 ? 's' : ''}
                 </span>
               </div>
+            </div>
 
-              {reservation.special_requests && (
-                <div className="detail-item full-width">
+            {/* Special requests if any */}
+            {reservation.special_requests && (
+              <div className="details-row">
+                <div className="detail-item special-requests">
                   <span className="detail-label">Demandes spéciales</span>
                   <span className="detail-value">{reservation.special_requests}</span>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Informations importantes */}
@@ -155,7 +170,10 @@ function ConfirmationPage() {
             <ul>
               <li>
                 <strong>Confirmation :</strong> Votre réservation est en attente de confirmation. 
-                Nous vous contacterons dans les plus brefs délais.
+                Nous vous contacterons par téléphone et email dans les plus brefs délais.
+              </li>
+              <li>
+                <strong>Notifications :</strong> Vous recevrez un email de confirmation dès que votre réservation sera validée par notre équipe.
               </li>
               <li>
                 <strong>Arrivée :</strong> Merci de vous présenter 15 minutes avant l'heure de votre réservation.
@@ -165,7 +183,7 @@ function ConfirmationPage() {
                 contactez-nous par téléphone.
               </li>
               <li>
-                <strong>Contact :</strong> +212 528 86 25 47
+                <strong>Contact :</strong> +212 661 46 05 93
               </li>
             </ul>
           </div>
@@ -174,8 +192,8 @@ function ConfirmationPage() {
           <div className="restaurant-info">
             <h3>📍 Resto Pêcheur</h3>
             <p>
-              <strong>Adresse :</strong> M7RG+RJ3, Bd Mohamed Hafidi, Tiznit 85000<br/>
-              <strong>Téléphone :</strong> +212 528 86 25 47<br/>
+              <strong>Adresse :</strong> Route De Tafraout Quartier Industriel, Tiznit 85000 Maroc<br/>
+              <strong>Téléphone :</strong> +212 661 46 05 93<br/>
               <strong>Email :</strong> contact@resto-pecheur.ma
             </p>
           </div>

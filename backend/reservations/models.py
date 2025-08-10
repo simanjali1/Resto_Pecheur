@@ -7,17 +7,43 @@ from datetime import datetime, timedelta, date
 from collections import defaultdict
 
 
-# NEW: Notification Model for Integration
+# SIMPLIFIED NOTIFICATION MODEL - Replace your current Notification class with this
+
 class Notification(models.Model):
-    """Système de notifications pour le restaurant"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    title = models.CharField(max_length=200)
-    message = models.TextField()
-    is_read = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    notification_type = models.CharField(max_length=50, default='general')
+    """Simple admin message system - like SMS messages"""
     
-    # Optional: Link to related reservation
+    MESSAGE_TYPES = [
+        ('new_reservation', '📨 Nouvelle Réservation'),
+        ('email_failed', '❌ Email Échoué'), 
+        ('email_success', '✅ Email Envoyé'),
+        ('reservation_confirmed', '✅ Confirmée'),
+        ('reservation_cancelled', '❌ Annulée'),
+        ('info', 'ℹ️ Information'),
+    ]
+    
+    PRIORITY_LEVELS = [
+        ('urgent', '🔴 Urgent'),     # Email failed, needs phone call
+        ('normal', '🟡 Normal'),     # New reservation, confirmation
+        ('info', '🟢 Info'),         # General information
+    ]
+    
+    # Core message info
+    title = models.CharField(max_length=200, verbose_name="Titre")
+    message = models.TextField(verbose_name="Message")
+    message_type = models.CharField(
+        max_length=30, 
+        choices=MESSAGE_TYPES, 
+        default='info',
+        verbose_name="Type"
+    )
+    priority = models.CharField(
+        max_length=10, 
+        choices=PRIORITY_LEVELS, 
+        default='normal',
+        verbose_name="Priorité"
+    )
+    
+    # Related reservation (optional)
     related_reservation = models.ForeignKey(
         'Reservation', 
         on_delete=models.CASCADE, 
@@ -26,19 +52,133 @@ class Notification(models.Model):
         verbose_name="Réservation liée"
     )
     
+    # Status
+    is_read = models.BooleanField(default=False, verbose_name="Lu")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Créé le")
+    read_at = models.DateTimeField(null=True, blank=True, verbose_name="Lu le")
+    
+    # Admin user (usually superuser)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Utilisateur")
+    
     class Meta:
         ordering = ['-created_at']
         verbose_name = "Notification"
         verbose_name_plural = "Notifications"
+        indexes = [
+            models.Index(fields=['created_at']),
+            models.Index(fields=['is_read']),
+            models.Index(fields=['priority', 'is_read']),
+        ]
     
     def __str__(self):
-        return f"{self.user.username} - {self.title}"
+        priority_icon = "🔴" if self.priority == 'urgent' else "🟡" if self.priority == 'normal' else "🟢"
+        read_status = "✓" if self.is_read else "●"
+        return f"{priority_icon} {read_status} {self.title}"
     
     def mark_as_read(self):
-        """Mark notification as read"""
+        """Mark message as read"""
         if not self.is_read:
             self.is_read = True
-            self.save()
+            self.read_at = timezone.now()
+            self.save(update_fields=['is_read', 'read_at'])
+    
+    @property
+    def is_urgent(self):
+        """Check if message is urgent"""
+        return self.priority == 'urgent'
+    
+    @property
+    def customer_name(self):
+        """Get customer name from related reservation"""
+        return self.related_reservation.customer_name if self.related_reservation else "N/A"
+    
+    @property
+    def customer_phone(self):
+        """Get customer phone from related reservation"""  
+        return self.related_reservation.customer_phone if self.related_reservation else "N/A"
+    
+    @property
+    def customer_email(self):
+        """Get customer email from related reservation"""
+        return self.related_reservation.customer_email if self.related_reservation else "N/A"
+    
+    @property
+    def reservation_date(self):
+        """Get reservation date"""
+        if self.related_reservation:
+            return self.related_reservation.date.strftime('%d/%m/%Y')
+        return "N/A"
+    
+    @property
+    def reservation_time(self):
+        """Get reservation time"""
+        if self.related_reservation:
+            return self.related_reservation.time.strftime('%H:%M')
+        return "N/A"
+    
+    @property
+    def time_ago(self):
+        """Human readable time since creation - USING DJANGO TIMEZONE ONLY"""
+        from django.utils import timezone
+        
+        # Use Django's timezone-aware datetime
+        # This respects the TIME_ZONE setting in settings.py (Africa/Casablanca)
+        now = timezone.localtime(timezone.now())
+        created_local = timezone.localtime(self.created_at)
+        
+        # Calculate difference
+        diff = now - created_local
+        
+        if diff.days > 0:
+            return f"Il y a {diff.days} jour{'s' if diff.days > 1 else ''}"
+        elif diff.seconds > 3600:
+            hours = diff.seconds // 3600
+            return f"Il y a {hours}h"
+        elif diff.seconds > 60:
+            minutes = diff.seconds // 60
+            return f"Il y a {minutes}min"
+        else:
+            return "À l'instant"
+    
+    @classmethod
+    def create_simple_message(cls, title, message, message_type='info', priority='normal', reservation=None):
+        """Helper method to create simple messages"""
+        admin_user = User.objects.filter(is_superuser=True).first()
+        if not admin_user:
+            return None
+        
+        return cls.objects.create(
+            user=admin_user,
+            title=title,
+            message=message,
+            message_type=message_type,
+            priority=priority,
+            related_reservation=reservation
+        )
+    
+    @classmethod
+    def mark_all_as_read(cls):
+        """Mark all unread messages as read"""
+        return cls.objects.filter(is_read=False).update(
+            is_read=True,
+            read_at=timezone.now()
+        )
+    
+    @classmethod
+    def get_unread_count(cls):
+        """Get count of unread messages"""
+        return cls.objects.filter(is_read=False).count()
+    
+    @classmethod
+    def get_urgent_count(cls):
+        """Get count of urgent unread messages"""
+        return cls.objects.filter(is_read=False, priority='urgent').count()
+    
+    @classmethod
+    def cleanup_old_messages(cls, days=30):
+        """Clean up old read messages"""
+        cutoff_date = timezone.now() - timedelta(days=days)
+        return cls.objects.filter(is_read=True, read_at__lt=cutoff_date).delete()
 
 
 class RestaurantInfo(models.Model):
@@ -422,37 +562,48 @@ class TimeSlot(models.Model):
 
 
 class SpecialDateManager(models.Manager):
-    """Manager pour les dates spéciales"""
+    """Manager pour les dates spéciales - UPDATED FOR is_open FIELD"""
     
     def upcoming(self):
         """Dates spéciales à venir"""
         return self.filter(date__gte=timezone.now().date())
     
     def closures(self):
-        """Fermetures seulement"""
-        return self.filter(is_closed=True)
+        """Fermetures seulement - UPDATED FOR is_open FIELD"""
+        return self.filter(is_open=False)  # ✅ FIXED: Changed from is_closed=True
     
     def upcoming_events(self):
-        """Événements à venir (non fermetures)"""
-        return self.upcoming().filter(is_closed=False)
+        """Événements à venir (non fermetures) - UPDATED FOR is_open FIELD"""
+        return self.upcoming().filter(is_open=True)  # ✅ FIXED: Changed from is_closed=False
     
     def get_closure_count(self):
-        """Nombre de fermetures à venir"""
+        """Nombre de fermetures à venir - UPDATED FOR is_open FIELD"""
         return self.upcoming().closures().count()
 
 
 class SpecialDate(models.Model):
-    """Dates spéciales (fermetures exceptionnelles, horaires modifiés)"""
+    """Dates spéciales (fermetures exceptionnelles, horaires modifiés) - FIXED WITH is_open FIELD"""
     date = models.DateField(verbose_name="Date")
-    is_closed = models.BooleanField(default=False, verbose_name="Fermé")
+    
+    # ✅ FIXED: Changed from is_closed to is_open to match views.py
+    is_open = models.BooleanField(default=True, verbose_name="Ouvert")
+    
     special_opening_time = models.TimeField(blank=True, null=True, verbose_name="Ouverture spéciale")
     special_closing_time = models.TimeField(blank=True, null=True, verbose_name="Fermeture spéciale")
     reason = models.CharField(max_length=200, blank=True, null=True, verbose_name="Raison")
     
     objects = SpecialDateManager()
     
+    # ✅ ADDED: Add special_hours property for API compatibility
+    @property
+    def special_hours(self):
+        """Format special hours for API response"""
+        if self.special_opening_time and self.special_closing_time:
+            return f"{self.special_opening_time.strftime('%H:%M')} - {self.special_closing_time.strftime('%H:%M')}"
+        return None
+    
     def __str__(self):
-        if self.is_closed:
+        if not self.is_open:  # ✅ FIXED: Changed from is_closed to not is_open
             return f"Fermé le {self.date} - {self.reason or 'Pas de raison'}"
         return f"Horaires modifiés le {self.date}"
     
@@ -462,7 +613,7 @@ class SpecialDate(models.Model):
         ordering = ['-date']
         indexes = [
             models.Index(fields=['date']),
-            models.Index(fields=['date', 'is_closed']),
+            models.Index(fields=['date', 'is_open']),  # ✅ FIXED: Changed from is_closed
         ]
     
     @property
@@ -499,7 +650,7 @@ def reservation_saved(sender, instance, created, **kwargs):
                     user=admin_user,
                     title="🍽️ Nouvelle Réservation!",
                     message=f"Nouvelle réservation de {instance.customer_name} pour {instance.number_of_guests} personnes le {instance.date.strftime('%d/%m/%Y')} à {instance.time.strftime('%H:%M')}.",
-                    notification_type="new_reservation",
+                    message_type="new_reservation",
                     related_reservation=instance
                 )
                 print(f"📝 Nouvelle réservation créée: {instance.customer_name} ({instance.status})")
@@ -515,7 +666,7 @@ def reservation_saved(sender, instance, created, **kwargs):
                     user=admin_user,
                     title="✅ Réservation Confirmée",
                     message=f"Réservation de {instance.customer_name} confirmée pour le {instance.date.strftime('%d/%m/%Y')} à {instance.time.strftime('%H:%M')}.",
-                    notification_type="reservation_confirmed",
+                    message_type="reservation_confirmed",
                     related_reservation=instance
                 )
                 print(f"✅ Réservation confirmée: {instance.customer_name}")

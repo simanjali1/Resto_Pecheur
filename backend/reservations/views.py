@@ -1,4 +1,4 @@
-# reservations/views.py - SINGLE RESTAURANT VERSION WITH TIMEZONE FIX
+# reservations/views.py - COMPLETE VERSION WITH SPECIAL DATES INTEGRATION
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
@@ -7,6 +7,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.http import JsonResponse
 from django.views.generic import ListView, DetailView, CreateView
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
@@ -14,6 +15,322 @@ from rest_framework.views import APIView
 from .models import RestaurantInfo, Reservation, TimeSlot, SpecialDate, get_restaurant_info
 from .serializers import ReservationSerializer, TimeSlotSerializer, RestaurantSerializer
 import json
+import logging
+import re
+
+# EMAIL VERIFICATION IMPORTS
+try:
+    import dns.resolver
+    DNS_AVAILABLE = True
+except ImportError:
+    DNS_AVAILABLE = False
+    print("⚠️ WARNING: dnspython not installed. Email verification will be limited.")
+
+logger = logging.getLogger(__name__)
+
+# ===== EMAIL VERIFICATION ENDPOINT =====
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def verify_email_exists(request):
+    """
+    Comprehensive email verification: Format + Domain + Typos + Disposable blocking
+    """
+    try:
+        data = json.loads(request.body)
+        email = data.get('email', '').strip().lower()
+        
+        if not email:
+            return JsonResponse({
+                'exists': False,
+                'error': 'Email is required'
+            })
+        
+        # Step 1: Basic format validation
+        if '@' not in email:
+            return JsonResponse({
+                'exists': False,
+                'error': 'Email must contain @'
+            })
+        
+        parts = email.split('@')
+        if len(parts) != 2:
+            return JsonResponse({
+                'exists': False,
+                'error': 'Invalid email format'
+            })
+        
+        username, domain = parts
+        
+        # Step 2: Username validation
+        if not username or len(username) < 1:
+            return JsonResponse({
+                'exists': False,
+                'error': 'Username cannot be empty'
+            })
+        
+        if len(username) > 64:
+            return JsonResponse({
+                'exists': False,
+                'error': 'Username too long (max 64 characters)'
+            })
+        
+        # Check for valid characters in username
+        if not re.match(r'^[a-zA-Z0-9._+-]+$', username):
+            return JsonResponse({
+                'exists': False,
+                'error': 'Username contains invalid characters'
+            })
+        
+        # Check for consecutive dots or starting/ending dots
+        if '..' in username or username.startswith('.') or username.endswith('.'):
+            return JsonResponse({
+                'exists': False,
+                'error': 'Invalid username format'
+            })
+        
+        # Step 3: Domain validation
+        if not domain or len(domain) < 3:
+            return JsonResponse({
+                'exists': False,
+                'error': 'Domain too short'
+            })
+        
+        if len(domain) > 255:
+            return JsonResponse({
+                'exists': False,
+                'error': 'Domain too long'
+            })
+        
+        if '.' not in domain:
+            return JsonResponse({
+                'exists': False,
+                'error': 'Domain must contain at least one dot'
+            })
+        
+        # Check for valid characters in domain
+        if not re.match(r'^[a-zA-Z0-9.-]+$', domain):
+            return JsonResponse({
+                'exists': False,
+                'error': 'Domain contains invalid characters'
+            })
+        
+        # Check domain parts
+        domain_parts = domain.split('.')
+        if len(domain_parts) < 2:
+            return JsonResponse({
+                'exists': False,
+                'error': 'Invalid domain format'
+            })
+        
+        # Check TLD (last part)
+        tld = domain_parts[-1]
+        if len(tld) < 2:
+            return JsonResponse({
+                'exists': False,
+                'error': 'Invalid top-level domain'
+            })
+        
+        # Step 4: Typo detection and correction
+        typo_corrections = {
+            'gmial.com': 'gmail.com',
+            'gmai.com': 'gmail.com',
+            'gmail.co': 'gmail.com',
+            'gmil.com': 'gmail.com',
+            'hotmial.com': 'hotmail.com',
+            'hotmai.com': 'hotmail.com',
+            'hotmeil.com': 'hotmail.com',
+            'yahooo.com': 'yahoo.com',
+            'yaho.com': 'yahoo.com',
+            'yahoo.co': 'yahoo.com',
+            'outloook.com': 'outlook.com',
+            'outlok.com': 'outlook.com',
+            'outlook.co': 'outlook.com',
+            'orage.fr': 'orange.fr',
+            'ornage.fr': 'orange.fr',
+            'fre.fr': 'free.fr',
+            'free.f': 'free.fr',
+            'sfr.f': 'sfr.fr',
+            'lapost.net': 'laposte.net',
+            'laposte.ne': 'laposte.net',
+            'wanadoo.f': 'wanadoo.fr',
+            'live.co': 'live.com',
+            'iclou.com': 'icloud.com',
+            'icloud.co': 'icloud.com'
+        }
+        
+        if domain in typo_corrections:
+            suggested_email = f"{username}@{typo_corrections[domain]}"
+            return JsonResponse({
+                'exists': False,
+                'error': f'Possible typo detected. Did you mean: {suggested_email}?'
+            })
+        
+        # Step 5: Disposable email blocking
+        disposable_domains = [
+            '10minutemail.com', 'tempmail.org', 'guerrillamail.com', 'mailinator.com',
+            'throwaway.email', 'temp-mail.org', 'getairmail.com', 'yopmail.com',
+            'maildrop.cc', 'sharklasers.com', 'grr.la', 'guerrillamailblock.com',
+            'tempmail.net', 'tempail.com', 'temp-mail.io', 'disposablemail.com',
+            'fakeinbox.com', 'spamgourmet.com', 'mohmal.com', 'emailondeck.com',
+            'getnada.com', 'tempinbox.com', 'tempr.email', 'temporaryemail.net'
+        ]
+        
+        if domain in disposable_domains:
+            return JsonResponse({
+                'exists': False,
+                'error': 'Temporary/disposable email addresses are not allowed'
+            })
+        
+        # Step 6: Domain MX record validation
+        if not DNS_AVAILABLE:
+            return JsonResponse({
+                'exists': True,
+                'message': 'Email format is valid (DNS verification unavailable)'
+            })
+        
+        try:
+            mx_records = dns.resolver.resolve(domain, 'MX')
+            
+            # Domain has MX records, email format is valid
+            return JsonResponse({
+                'exists': True,
+                'message': 'Email format is valid and domain accepts emails'
+            })
+            
+        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+            return JsonResponse({
+                'exists': False,
+                'error': 'Domain does not exist or cannot receive emails'
+            })
+        except Exception as e:
+            logger.error(f"DNS verification error for {domain}: {e}")
+            # If DNS fails, but format is valid, still allow it
+            return JsonResponse({
+                'exists': True,
+                'message': 'Email format is valid (domain verification failed)'
+            })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'exists': False,
+            'error': 'Invalid request format'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Email verification error: {e}")
+        return JsonResponse({
+            'exists': False,
+            'error': 'Email verification service temporarily unavailable'
+        }, status=500)
+
+# Alternative lightweight verification (less accurate but faster)
+@csrf_exempt
+@require_http_methods(["POST"])
+def verify_email_lightweight(request):
+    """
+    Lightweight email verification - only checks domain validity
+    """
+    try:
+        data = json.loads(request.body)
+        email = data.get('email', '').strip().lower()
+        
+        if not email or '@' not in email:
+            return JsonResponse({
+                'exists': False,
+                'error': 'Invalid email format'
+            })
+        
+        domain = email.split('@')[1]
+        
+        if not DNS_AVAILABLE:
+            return JsonResponse({
+                'exists': None,
+                'error': 'DNS verification not available'
+            })
+        
+        # Check if domain has MX record
+        try:
+            mx_records = dns.resolver.resolve(domain, 'MX')
+            return JsonResponse({
+                'exists': True,
+                'message': 'Domain can receive emails',
+                'verification_type': 'domain_only'
+            })
+        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+            return JsonResponse({
+                'exists': False,
+                'error': 'Domain does not accept emails'
+            })
+        except Exception as e:
+            logger.error(f"Domain verification error: {e}")
+            return JsonResponse({
+                'exists': None,
+                'error': 'Verification service unavailable'
+            })
+            
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'exists': None,
+            'error': 'Invalid JSON data'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Email verification error: {e}")
+        return JsonResponse({
+            'exists': None,
+            'error': 'Verification service temporarily unavailable'
+        }, status=500)
+
+# For bulk email verification (if needed)
+@csrf_exempt
+@require_http_methods(["POST"])
+def verify_emails_bulk(request):
+    """
+    Verify multiple emails at once
+    """
+    try:
+        data = json.loads(request.body)
+        emails = data.get('emails', [])
+        
+        if not emails or len(emails) > 50:  # Limit to 50 emails per request
+            return JsonResponse({
+                'error': 'Invalid email list (max 50 emails)'
+            }, status=400)
+        
+        results = []
+        for email in emails:
+            # Use the main verification function
+            mock_request = type('MockRequest', (), {
+                'method': 'POST',
+                'body': json.dumps({'email': email}).encode()
+            })()
+            
+            # Get verification result
+            result = verify_email_exists(mock_request)
+            result_data = json.loads(result.content)
+            
+            results.append({
+                'email': email,
+                'exists': result_data.get('exists'),
+                'message': result_data.get('message', result_data.get('error', ''))
+            })
+        
+        return JsonResponse({
+            'results': results,
+            'total': len(emails),
+            'valid': len([r for r in results if r['exists'] is True]),
+            'invalid': len([r for r in results if r['exists'] is False]),
+            'unknown': len([r for r in results if r['exists'] is None])
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'error': 'Invalid JSON data'
+        }, status=400)
+    except Exception as e:
+        logger.error(f"Bulk email verification error: {e}")
+        return JsonResponse({
+            'error': 'Verification service temporarily unavailable'
+        }, status=500)
 
 # ===== API VIEWS FOR FRONTEND (React) =====
 
@@ -53,7 +370,7 @@ class TimeSlotListView(generics.ListAPIView):
         return queryset
 
 class ReservationCreateView(generics.CreateAPIView):
-    """Create new reservation - FIXED TIMEZONE HANDLING"""
+    """Create new reservation with special dates check"""
     queryset = Reservation.objects.all()
     serializer_class = ReservationSerializer
     
@@ -75,25 +392,22 @@ class ReservationCreateView(generics.CreateAPIView):
             time_str = data['time']
             guests = int(data['number_of_guests'])
             
-            # TIMEZONE FIX: Debug and proper date handling
-            print(f"🔍 DEBUG - Original date from frontend: {date_str}")
-            print(f"🔍 DEBUG - Original time from frontend: {time_str}")
-            print(f"🔍 DEBUG - Current Django timezone: {timezone.get_current_timezone()}")
-            print(f"🔍 DEBUG - Current Django date: {timezone.now().date()}")
-            
             try:
                 # Parse date without timezone conversion
-                # This should preserve the date as-is without timezone adjustment
                 date = datetime.strptime(date_str, '%Y-%m-%d').date()
                 time_obj = datetime.strptime(time_str, '%H:%M').time()
                 
-                print(f"🔍 DEBUG - Parsed date: {date}")
-                print(f"🔍 DEBUG - Parsed time: {time_obj}")
-                
             except ValueError as e:
-                print(f"❌ ERROR - Date/time parsing failed: {e}")
                 return Response(
                     {'error': f'Invalid date or time format: {e}'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # ✅ NEW: Check if date is a special date (closed)
+            special_date = SpecialDate.objects.filter(date=date).first()
+            if special_date and not special_date.is_open:
+                return Response(
+                    {'error': 'Restaurant fermé ce jour-là'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
@@ -106,14 +420,12 @@ class ReservationCreateView(generics.CreateAPIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Count existing reservations - FIXED: Use French status values
+            # Count existing reservations
             existing_reservations = Reservation.objects.filter(
                 date=date,
                 time=time_obj,
                 status__in=['En attente', 'Confirmée']
             ).count()
-            
-            print(f"🔍 DEBUG - Existing reservations for {date} at {time_obj}: {existing_reservations}")
             
             if existing_reservations >= time_slot.max_reservations:
                 return Response(
@@ -121,7 +433,7 @@ class ReservationCreateView(generics.CreateAPIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Create the reservation - FIXED: Use French status value
+            # Create the reservation
             reservation = Reservation.objects.create(
                 customer_name=data['customer_name'],
                 customer_email=data['customer_email'],
@@ -130,16 +442,20 @@ class ReservationCreateView(generics.CreateAPIView):
                 time=time_obj,
                 number_of_guests=guests,
                 special_requests=data.get('special_requests', ''),
-                status='En attente'  # Changed from 'pending'
+                status='En attente'
             )
-            
-            # Debug: Check what was actually saved
-            print(f"✅ SUCCESS - Reservation created with date: {reservation.date}")
-            print(f"✅ SUCCESS - Reservation ID: {reservation.id}")
-            
+
             return Response({
                 'id': reservation.id,
                 'message': 'Reservation created successfully',
+                'customer_name': reservation.customer_name,
+                'customer_email': reservation.customer_email,
+                'customer_phone': reservation.customer_phone,
+                'date': reservation.date.strftime('%Y-%m-%d'),
+                'time': reservation.time.strftime('%H:%M'),
+                'number_of_guests': reservation.number_of_guests,
+                'special_requests': reservation.special_requests,
+                'status': reservation.status,
                 'reservation': {
                     'id': reservation.id,
                     'customer_name': reservation.customer_name,
@@ -151,32 +467,56 @@ class ReservationCreateView(generics.CreateAPIView):
             }, status=status.HTTP_201_CREATED)
             
         except Exception as e:
-            print(f"❌ ERROR in reservation creation: {e}")
-            import traceback
-            print(f"❌ TRACEBACK: {traceback.format_exc()}")
             return Response(
                 {'error': str(e)}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-# ===== AVAILABILITY ENDPOINT =====
+# ===== SPECIAL DATES API ENDPOINT =====
+@api_view(['GET'])
+def special_dates_list(request):
+    """Get all special dates for frontend calendar"""
+    try:
+        # Get future special dates only
+        special_dates = SpecialDate.objects.filter(
+            date__gte=timezone.now().date()
+        ).values('date', 'is_open', 'reason', 'special_hours')
+        
+        return JsonResponse({
+            'special_dates': list(special_dates)
+        })
+    except Exception as e:
+        return JsonResponse({
+            'error': str(e)
+        }, status=500)
+
+# ===== AVAILABILITY ENDPOINT WITH SPECIAL DATES =====
 @csrf_exempt
 def check_availability_by_date(request):
-    """Check availability for a specific date - FIXED TIMEZONE HANDLING"""
+    """Check availability for a specific date with special dates integration"""
     if request.method == 'GET':
         try:
             date_str = request.GET.get('date')
             if not date_str:
                 return JsonResponse({'error': 'Date parameter required'}, status=400)
             
-            print(f"🔍 DEBUG - Availability check for date: {date_str}")
-            
             # Parse the date
             try:
                 date = datetime.strptime(date_str, '%Y-%m-%d').date()
-                print(f"🔍 DEBUG - Parsed availability date: {date}")
             except ValueError:
                 return JsonResponse({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=400)
+            
+            # ✅ NEW: Check if date is a special date
+            special_date = SpecialDate.objects.filter(date=date).first()
+            if special_date and not special_date.is_open:
+                return JsonResponse({
+                    'date': date_str,
+                    'availability': [],
+                    'message': 'Restaurant fermé ce jour',
+                    'is_special_date': True,
+                    'reason': special_date.reason,
+                    'total_slots': 0
+                })
             
             # Get all active time slots
             time_slots = TimeSlot.objects.filter(is_active=True).order_by('time')
@@ -201,7 +541,7 @@ def check_availability_by_date(request):
             
             availability_data = []
             for slot in time_slots:
-                # Count existing reservations for this date and time - FIXED: Use French status values
+                # Count existing reservations for this date and time
                 existing_reservations = Reservation.objects.filter(
                     date=date,
                     time=slot.time,
@@ -210,8 +550,6 @@ def check_availability_by_date(request):
                 
                 available_spots = slot.max_reservations - existing_reservations
                 is_available = available_spots > 0
-                
-                print(f"🔍 DEBUG - Slot {slot.time}: {existing_reservations}/{slot.max_reservations} reservations")
                 
                 availability_data.append({
                     'time': slot.time.strftime('%H:%M'),
@@ -222,14 +560,24 @@ def check_availability_by_date(request):
                     'is_available': is_available
                 })
             
-            return JsonResponse({
+            response_data = {
                 'date': date_str,
                 'availability': availability_data,
-                'total_slots': len(availability_data)
-            })
+                'total_slots': len(availability_data),
+                'is_special_date': False
+            }
+            
+            # Add special date info if it exists but is open
+            if special_date and special_date.is_open:
+                response_data.update({
+                    'is_special_date': True,
+                    'reason': special_date.reason,
+                    'special_hours': special_date.special_hours
+                })
+            
+            return JsonResponse(response_data)
             
         except Exception as e:
-            print(f"❌ ERROR in availability check: {e}")
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'GET method required'}, status=405)
@@ -255,6 +603,14 @@ def check_availability(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
+    # Check if date is a special date (closed)
+    special_date = SpecialDate.objects.filter(date=date).first()
+    if special_date and not special_date.is_open:
+        return Response({
+            'available': False, 
+            'message': 'Restaurant fermé ce jour'
+        }, status=status.HTTP_200_OK)
+    
     # Get time slot
     try:
         time_slot = TimeSlot.objects.get(time=time, is_active=True)
@@ -264,7 +620,7 @@ def check_availability(request):
             status=status.HTTP_200_OK
         )
     
-    # Check reservations for this date and time - FIXED: Use French status values
+    # Check reservations for this date and time
     existing_reservations = Reservation.objects.filter(
         date=date,
         time=time,
@@ -295,7 +651,8 @@ def api_test(request):
         'timezone': str(current_tz),
         'local_date': current_time.date().strftime('%Y-%m-%d'),
         'local_time': current_time.time().strftime('%H:%M:%S'),
-        'method': request.method
+        'method': request.method,
+        'email_verification_available': DNS_AVAILABLE
     })
 
 # ===== ADMIN API VIEWS =====
@@ -313,7 +670,7 @@ class ReservationDetailView(generics.RetrieveUpdateDestroyAPIView):
 @api_view(['GET'])
 @staff_member_required
 def dashboard_stats(request):
-    """Basic dashboard statistics API - FIXED: French status values"""
+    """Basic dashboard statistics API"""
     today = timezone.now().date()
     restaurant = get_restaurant_info()
     
@@ -323,11 +680,8 @@ def dashboard_stats(request):
         'restaurant_tables': restaurant.number_of_tables,
         'total_reservations': Reservation.objects.count(),
         'today_reservations': Reservation.objects.filter(date=today).count(),
-        
-        # FIXED: Use French status values
         'pending_reservations': Reservation.objects.filter(status='En attente').count(),
         'confirmed_reservations': Reservation.objects.filter(status='Confirmée').count(),
-        
         'occupancy_rate': restaurant.get_occupancy_rate_today(),
         'available_tables': restaurant.get_available_tables_today(),
     }
@@ -337,7 +691,7 @@ def dashboard_stats(request):
 @api_view(['POST'])
 @staff_member_required
 def update_reservation_status(request, reservation_id):
-    """Update reservation status - FIXED: Accept French status values"""
+    """Update reservation status"""
     try:
         reservation = get_object_or_404(Reservation, id=reservation_id)
         new_status = request.data.get('status')
@@ -353,7 +707,121 @@ def update_reservation_status(request, reservation_id):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-# ===== UNIFIED DASHBOARD VIEWS =====
+# ===== RESTAURANT INFO API =====
+@api_view(['GET'])
+def restaurant_info(request):
+    """Get restaurant information"""
+    restaurant = get_restaurant_info()
+    
+    return JsonResponse({
+        'name': restaurant.name,
+        'address': restaurant.address,
+        'phone': restaurant.phone,
+        'email': restaurant.email,
+        'description': restaurant.description,
+        'capacity': restaurant.capacity,
+        'number_of_tables': restaurant.number_of_tables,
+        'opening_time': restaurant.opening_time.strftime('%H:%M'),
+        'closing_time': restaurant.closing_time.strftime('%H:%M'),
+        'occupancy_rate_today': restaurant.get_occupancy_rate_today(),
+        'available_tables_today': restaurant.get_available_tables_today(),
+        'email_verification_available': DNS_AVAILABLE,
+    })
+
+# ===== TIMEZONE DEBUG ENDPOINT =====
+@csrf_exempt
+def timezone_debug(request):
+    """Debug endpoint to check timezone handling"""
+    now_utc = timezone.now()
+    now_local = timezone.localtime(now_utc)
+    
+    return JsonResponse({
+        'server_timezone': str(timezone.get_current_timezone()),
+        'utc_time': now_utc.isoformat(),
+        'local_time': now_local.isoformat(),
+        'utc_date': now_utc.date().strftime('%Y-%m-%d'),
+        'local_date': now_local.date().strftime('%Y-%m-%d'),
+        'django_settings': {
+            'USE_TZ': True,  # Should be True
+            'TIME_ZONE': 'Africa/Casablanca'
+        },
+        'test_date_parsing': {
+            'input': '2025-07-18',
+            'parsed': datetime.strptime('2025-07-18', '%Y-%m-%d').date().strftime('%Y-%m-%d')
+        },
+        'email_verification_available': DNS_AVAILABLE,
+        'dns_library_status': 'Available' if DNS_AVAILABLE else 'Not installed - run: pip install dnspython'
+    })
+
+# ===== HELPER FUNCTIONS FOR DASHBOARD =====
+
+def get_available_tables_count(date, time):
+    """Calculate available tables for given date and time"""
+    restaurant = get_restaurant_info()
+    
+    # Count reservations for today
+    reservations_count = Reservation.objects.filter(
+        date=date,
+        status__in=['Confirmée', 'En attente']
+    ).count()
+    
+    return max(0, restaurant.number_of_tables - reservations_count)
+
+def get_peak_hour_today(date):
+    """Find the busiest hour for today"""
+    peak_hour = Reservation.objects.filter(
+        date=date,
+        status__in=['En attente', 'Confirmée']
+    ).values('time').annotate(
+        count=Count('id')
+    ).order_by('-count').first()
+    
+    if peak_hour and peak_hour['count'] > 0:
+        return peak_hour['time'].strftime('%H:%M')
+    return None
+
+def get_next_available_slot():
+    """Find next available time slot with special dates check"""
+    now = timezone.localtime(timezone.now())
+    current_date = now.date()
+    current_time = now.time()
+    
+    # Look for available slots in the next 7 days
+    for days_ahead in range(7):
+        check_date = current_date + timedelta(days=days_ahead)
+        
+        # Check if date is a special date (closed)
+        special_date = SpecialDate.objects.filter(date=check_date).first()
+        if special_date and not special_date.is_open:
+            continue
+        
+        # Get all time slots for this date
+        time_slots = TimeSlot.objects.filter(is_active=True).order_by('time')
+        
+        for slot in time_slots:
+            # If it's today, skip past time slots
+            if days_ahead == 0:
+                if slot.time <= current_time:
+                    continue
+            
+            reservations_count = Reservation.objects.filter(
+                date=check_date,
+                time=slot.time,
+                status__in=['Confirmée', 'En attente']
+            ).count()
+            
+            # Check against slot max reservations
+            if reservations_count < slot.max_reservations:
+                if days_ahead == 0:
+                    return f"Aujourd'hui {slot.time.strftime('%H:%M')}"
+                elif days_ahead == 1:
+                    return f"Demain {slot.time.strftime('%H:%M')}"
+                else:
+                    return f"{check_date.strftime('%d/%m')} à {slot.time.strftime('%H:%M')}"
+    
+    return "Aucun créneau disponible cette semaine"
+
+# ===== DASHBOARD VIEWS (if needed) =====
 
 @staff_member_required
 def dashboard_view(request):
@@ -366,14 +834,7 @@ def dashboard_view(request):
     # Get restaurant instance (single instance)
     restaurant = get_restaurant_info()
     
-    # ADD THIS DEBUG BLOCK:
-    print(f"🔥 DASHBOARD DEBUG - Today's date: {today}")
-    today_reservations_debug = Reservation.objects.filter(date=today).order_by('time')
-    print(f"🔥 DASHBOARD DEBUG - Found {today_reservations_debug.count()} reservations")
-    for res in today_reservations_debug:
-        print(f"🔥 DASHBOARD DEBUG - Reservation: {res.customer_name} at {res.time} (status: {res.status})")
-    
-    # Basic metrics - FIXED: Use French status values
+    # Basic metrics
     metrics = {
         'today_reservations': Reservation.objects.filter(date=today).count(),
         'today_confirmed': Reservation.objects.filter(date=today, status='Confirmée').count(),
@@ -407,348 +868,20 @@ def dashboard_view(request):
         date=today
     ).order_by('time')
     
-    # Alerts
-    alerts = get_dashboard_alerts(today)
-    
-    # Chart data - ADD DEBUG HERE TOO:
-    print(f"🔥 DASHBOARD DEBUG - About to call get_daily_time_slots_data")
-    daily_slots_data = get_daily_time_slots_data(today)
-    print(f"🔥 DASHBOARD DEBUG - Chart data returned: {daily_slots_data}")
-    
-    chart_data = {
-        'weekly_reservations': get_weekly_chart_data(week_start),
-        'daily_time_slots': daily_slots_data,
-    }
-    
     context = {
         'metrics': metrics,
         'recent_reservations': recent_reservations,
         'todays_schedule': todays_schedule,
-        'alerts': alerts,
-        'chart_data': chart_data,
         'restaurant': restaurant,
+        'email_verification_available': DNS_AVAILABLE,
     }
     
     return render(request, 'admin/unified_dashboard_with_sidebar.html', context)
 
-def get_available_tables_count(date, time):
-    """Calculate available tables for given date and time - FIXED: French status values"""
-    restaurant = get_restaurant_info()
-    
-    # Count reservations for today
-    reservations_count = Reservation.objects.filter(
-        date=date,
-        status__in=['Confirmée', 'En attente']
-    ).count()
-    
-    return max(0, restaurant.number_of_tables - reservations_count)
-
-def get_peak_hour_today(date):
-    """Find the busiest hour for today - FIXED: French status values"""
-    peak_hour = Reservation.objects.filter(
-        date=date,
-        status__in=['En attente', 'Confirmée']
-    ).values('time').annotate(
-        count=Count('id')
-    ).order_by('-count').first()
-    
-    if peak_hour and peak_hour['count'] > 0:
-        return peak_hour['time'].strftime('%H:%M')
-    return None
-
-def get_next_available_slot():
-    """Find next available time slot - FIXED: French status values"""
-    now = timezone.localtime(timezone.now())
-    current_date = now.date()
-    current_time = now.time()
-    
-    # Look for available slots in the next 7 days
-    for days_ahead in range(7):
-        check_date = current_date + timedelta(days=days_ahead)
-        
-        # Get all time slots for this date
-        time_slots = TimeSlot.objects.filter(is_active=True).order_by('time')
-        
-        for slot in time_slots:
-            # If it's today, skip past time slots
-            if days_ahead == 0:
-                if slot.time <= current_time:
-                    continue
-            
-            reservations_count = Reservation.objects.filter(
-                date=check_date,
-                time=slot.time,
-                status__in=['Confirmée', 'En attente']
-            ).count()
-            
-            # Check against slot max reservations
-            if reservations_count < slot.max_reservations:
-                if days_ahead == 0:
-                    return f"Aujourd'hui {slot.time.strftime('%H:%M')}"
-                elif days_ahead == 1:
-                    return f"Demain {slot.time.strftime('%H:%M')}"
-                else:
-                    return f"{check_date.strftime('%d/%m')} à {slot.time.strftime('%H:%M')}"
-    
-    return "Aucun créneau disponible cette semaine"
-
-def get_dashboard_alerts(date):
-    """Generate dashboard alerts - FIXED: French status values"""
-    alerts = []
-    
-    # Check for overbookings
-    time_slots = TimeSlot.objects.filter(is_active=True)
-    for slot in time_slots:
-        reservations_count = Reservation.objects.filter(
-            date=date,
-            time=slot.time,
-            status__in=['Confirmée', 'En attente']
-        ).count()
-        
-        if reservations_count > slot.max_reservations:
-            alerts.append({
-                'type': 'danger',
-                'icon': '🚨',
-                'message': f"Surbooking à {slot.time.strftime('%H:%M')} - {reservations_count} réservations",
-                'time': slot.time
-            })
-        elif reservations_count > (slot.max_reservations - 2):  # Near capacity
-            alerts.append({
-                'type': 'warning',
-                'icon': '⚠️',
-                'message': f"Presque complet à {slot.time.strftime('%H:%M')} - {reservations_count}/{slot.max_reservations}",
-                'time': slot.time
-            })
-    
-    # Check for large parties
-    large_parties = Reservation.objects.filter(
-        date=date,
-        number_of_guests__gte=8
-    )
-    
-    for party in large_parties:
-        alerts.append({
-            'type': 'info',
-            'icon': '👥',
-            'message': f"Groupe important: {party.customer_name} - {party.number_of_guests} personnes à {party.time.strftime('%H:%M')}",
-            'time': party.time
-        })
-    
-    # Check for special requests
-    special_reservations = Reservation.objects.filter(
-        date=date,
-        special_requests__isnull=False
-    ).exclude(special_requests='')
-    
-    for reservation in special_reservations:
-        alerts.append({
-            'type': 'success',
-            'icon': '📝',
-            'message': f"Demande spéciale: {reservation.customer_name} - {reservation.special_requests[:50]}...",
-            'time': reservation.time
-        })
-    
-    # Check for upcoming special dates
-    special_dates = SpecialDate.objects.filter(
-        date=date
-    )
-    
-    for special_date in special_dates:
-        if special_date.is_closed:
-            alerts.append({
-                'type': 'danger',
-                'icon': '🚫',
-                'message': f"Fermeture exceptionnelle: {special_date.reason or 'Pas de raison'}",
-                'time': None
-            })
-        else:
-            alerts.append({
-                'type': 'info',
-                'icon': '⏰',
-                'message': f"Horaires modifiés: {special_date.reason or 'Voir détails'}",
-                'time': None
-            })
-    
-    # Sort alerts by time (put non-time alerts at the end)
-    alerts.sort(key=lambda x: x.get('time') or timezone.now().time())
-    
-    return alerts
-
-def get_weekly_chart_data(week_start):
-    """Get reservation data for the current week"""
-    data = []
-    labels = []
-    
-    for i in range(7):
-        day = week_start + timedelta(days=i)
-        count = Reservation.objects.filter(date=day).count()
-        data.append(count)
-        labels.append(day.strftime('%a %d'))
-    
-    return {
-        'labels': labels,
-        'data': data
-    }
-
-def get_daily_time_slots_data(date):
-    """Get reservation data by ACTUAL reservation times for today - CORRECTED VERSION"""
-    from collections import defaultdict
-    
-    print(f"🔍 CHART DEBUG - Getting data for date: {date}")
-    
-    # Get all reservations for today
-    todays_reservations = Reservation.objects.filter(date=date).order_by('time')
-    
-    print(f"🔍 CHART DEBUG - Found {todays_reservations.count()} reservations")
-    
-    if not todays_reservations.exists():
-        print("🔍 CHART DEBUG - No reservations, returning empty data")
-        return {
-            'labels': [],
-            'data': []
-        }
-    
-    # Count reservations by actual time - ONLY use actual reservation times
-    time_counts = defaultdict(int)
-    
-    for reservation in todays_reservations:
-        time_str = reservation.time.strftime('%H:%M')
-        time_counts[time_str] += 1
-        print(f"🔍 CHART DEBUG - Reservation: {reservation.customer_name} at {time_str} (status: {reservation.status})")
-    
-    # Sort times and prepare data - CRITICAL: Only include times that have reservations
-    sorted_times = sorted(time_counts.keys())
-    labels = sorted_times
-    data = [time_counts[time] for time in sorted_times]
-    
-    print(f"🔍 CHART DEBUG - Final labels: {labels}")
-    print(f"🔍 CHART DEBUG - Final data: {data}")
-    print(f"🔍 CHART DEBUG - Time counts: {dict(time_counts)}")
-    
-    return {
-        'labels': labels,
-        'data': data
-    }
-
-# ALTERNATIVE VERSION - If you want to show ALL time slots (including empty ones)
-def get_daily_time_slots_data_with_empty_slots(date):
-    """Show ALL configured time slots, even empty ones"""
-    from collections import defaultdict
-    
-    print(f"🔍 CHART DEBUG - Getting data with empty slots for date: {date}")
-    
-    # Get all active time slots
-    time_slots = TimeSlot.objects.filter(is_active=True).order_by('time')
-    
-    if not time_slots.exists():
-        print("🔍 CHART DEBUG - No time slots configured")
-        return {'labels': [], 'data': []}
-    
-    # Initialize all time slots with 0
-    time_counts = {}
-    for slot in time_slots:
-        time_str = slot.time.strftime('%H:%M')
-        time_counts[time_str] = 0
-        print(f"🔍 CHART DEBUG - Initialized slot: {time_str}")
-    
-    # Count actual reservations
-    todays_reservations = Reservation.objects.filter(date=date)
-    for reservation in todays_reservations:
-        time_str = reservation.time.strftime('%H:%M')
-        if time_str in time_counts:  # Only count if it's a valid time slot
-            time_counts[time_str] += 1
-            print(f"🔍 CHART DEBUG - Added reservation: {reservation.customer_name} at {time_str}")
-    
-    # Sort and return
-    sorted_times = sorted(time_counts.keys())
-    labels = sorted_times
-    data = [time_counts[time] for time in sorted_times]
-    
-    print(f"🔍 CHART DEBUG - All slots - Labels: {labels}")
-    print(f"🔍 CHART DEBUG - All slots - Data: {data}")
-    
-    return {
-        'labels': labels,
-        'data': data
-    }
-
-def get_daily_time_slots_data_with_all_slots(date):
-    """Get reservation data showing ALL time slots (including empty ones)"""
-    
-    # Get all active time slots
-    time_slots = TimeSlot.objects.filter(is_active=True).order_by('time')
-    
-    # Also get any actual reservation times that might not be in TimeSlot model
-    actual_reservation_times = Reservation.objects.filter(
-        date=date
-    ).values_list('time', flat=True).distinct().order_by('time')
-    
-    # Combine all times
-    all_times = set()
-    
-    # Add time slots
-    for slot in time_slots:
-        all_times.add(slot.time)
-    
-    # Add actual reservation times
-    for res_time in actual_reservation_times:
-        all_times.add(res_time)
-    
-    # Sort all times
-    sorted_times = sorted(all_times)
-    
-    labels = []
-    data = []
-    
-    for time_obj in sorted_times:
-        time_str = time_obj.strftime('%H:%M')
-        labels.append(time_str)
-        
-        # Count actual reservations for this time
-        count = Reservation.objects.filter(
-            date=date,
-            time=time_obj
-        ).count()
-        data.append(count)
-        
-        print(f"🔍 DEBUG - Time slot {time_str}: {count} reservations")
-    
-    print(f"🔍 DEBUG - Final chart labels: {labels}")
-    print(f"🔍 DEBUG - Final chart data: {data}")
-    
-    return {
-        'labels': labels,
-        'data': data
-    }
-
-def get_monthly_trends_data():
-    """Get monthly reservation trends"""
-    today = timezone.now().date()
-    data = []
-    labels = []
-    
-    # Get last 6 months
-    for i in range(6):
-        month_start = (today.replace(day=1) - timedelta(days=i*30)).replace(day=1)
-        month_end = (month_start + timedelta(days=32)).replace(day=1) - timedelta(days=1)
-        
-        count = Reservation.objects.filter(
-            date__gte=month_start,
-            date__lte=month_end
-        ).count()
-        
-        data.insert(0, count)
-        labels.insert(0, month_start.strftime('%b %Y'))
-    
-    return {
-        'labels': labels,
-        'data': data
-    }
-
 # API endpoints for AJAX updates
 @staff_member_required
 def dashboard_api_metrics(request):
-    """API endpoint for real-time metrics - FIXED: French status values"""
+    """API endpoint for real-time metrics"""
     today = timezone.now().date()
     now = timezone.now()
     restaurant = get_restaurant_info()
@@ -760,16 +893,14 @@ def dashboard_api_metrics(request):
             total=Sum('number_of_guests')
         )['total'] or 0,
         'available_tables': get_available_tables_count(today, now.time()),
-        
-        # FIXED: Use French status values
         'pending_reservations': Reservation.objects.filter(
             date=today, 
             status='En attente'
         ).count(),
-        
         'occupancy_rate': restaurant.get_occupancy_rate_today(),
         'total_capacity': restaurant.capacity,
         'total_tables': restaurant.number_of_tables,
+        'email_verification_available': DNS_AVAILABLE,
     }
     
     return JsonResponse(metrics)
@@ -792,46 +923,3 @@ def dashboard_api_recent(request):
         })
     
     return JsonResponse({'recent_reservations': data})
-
-# ===== RESTAURANT INFO API =====
-@api_view(['GET'])
-def restaurant_info(request):
-    """Get restaurant information"""
-    restaurant = get_restaurant_info()
-    
-    return JsonResponse({
-        'name': restaurant.name,
-        'address': restaurant.address,
-        'phone': restaurant.phone,
-        'email': restaurant.email,
-        'description': restaurant.description,
-        'capacity': restaurant.capacity,
-        'number_of_tables': restaurant.number_of_tables,
-        'opening_time': restaurant.opening_time.strftime('%H:%M'),
-        'closing_time': restaurant.closing_time.strftime('%H:%M'),
-        'occupancy_rate_today': restaurant.get_occupancy_rate_today(),
-        'available_tables_today': restaurant.get_available_tables_today(),
-    })
-
-# ===== TIMEZONE DEBUG ENDPOINT =====
-@csrf_exempt
-def timezone_debug(request):
-    """Debug endpoint to check timezone handling"""
-    now_utc = timezone.now()
-    now_local = timezone.localtime(now_utc)
-    
-    return JsonResponse({
-        'server_timezone': str(timezone.get_current_timezone()),
-        'utc_time': now_utc.isoformat(),
-        'local_time': now_local.isoformat(),
-        'utc_date': now_utc.date().strftime('%Y-%m-%d'),
-        'local_date': now_local.date().strftime('%Y-%m-%d'),
-        'django_settings': {
-            'USE_TZ': True,  # Should be True
-            'TIME_ZONE': 'Africa/Casablanca'
-        },
-        'test_date_parsing': {
-            'input': '2025-07-18',
-            'parsed': datetime.strptime('2025-07-18', '%Y-%m-%d').date().strftime('%Y-%m-%d')
-        }
-    })

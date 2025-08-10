@@ -8,6 +8,297 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
+        /* COMPREHENSIVE BLUE COLOR OVERRIDE - Target ALL blue elements */
+        
+        /* BOOTSTRAP BUTTONS - All variations */
+        .btn-primary,
+        .btn-primary:not(:disabled):not(.disabled),
+        input[type="submit"].btn-primary,
+        .btn-outline-primary,
+        button.btn.btn-primary,
+        .btn.btn-primary {
+            background-color: #333354d0 !important;
+            background-image: none !important;
+            border-color: #333354d0 !important;
+            color: white !important;
+        }
+
+        .btn-primary:hover,
+        .btn-primary:focus,
+        .btn-primary:active,
+        .btn-primary.active,
+        .btn-primary:not(:disabled):not(.disabled):active,
+        .btn-primary:not(:disabled):not(.disabled).active,
+        button.btn.btn-primary:hover,
+        button.btn.btn-primary:focus,
+        button.btn.btn-primary:active {
+            background-color: #333354 !important;
+            background-image: none !important;
+            border-color: #333354 !important;
+            color: white !important;
+            box-shadow: none !important;
+        }
+
+        /* SPECIFIC ADMIN INTERFACE BUTTONS */
+        /* Search button */
+        input[type="submit"][value="Rechercher"],
+        button[type="submit"],
+        .search-form .btn,
+        .filters .btn,
+        .changelist-search input[type="submit"],
+        .actions input[type="submit"],
+        .actions button {
+            background-color: #333354d0 !important;
+            border-color: #333354d0 !important;
+            color: white !important;
+        }
+
+        input[type="submit"][value="Rechercher"]:hover,
+        button[type="submit"]:hover,
+        .search-form .btn:hover,
+        .filters .btn:hover,
+        .changelist-search input[type="submit"]:hover,
+        .actions input[type="submit"]:hover,
+        .actions button:hover {
+            background-color: #333354 !important;
+            border-color: #333354 !important;
+        }
+
+        /* Send/Submit buttons */
+        input[type="submit"][value="Envoyer"],
+        input[type="submit"][value="Send"],
+        .submit-row input[type="submit"]:not(.btn-success) {
+            background-color: #333354d0 !important;
+            border-color: #333354d0 !important;
+            color: white !important;
+        }
+
+        input[type="submit"][value="Envoyer"]:hover,
+        input[type="submit"][value="Send"]:hover,
+        .submit-row input[type="submit"]:not(.btn-success):hover {
+            background-color: #333354 !important;
+            border-color: #333354 !important;
+        }
+
+        /* JAZZMIN SPECIFIC OVERRIDES */
+        .btn-outline-primary,
+        .btn-outline-primary:not(:disabled):not(.disabled) {
+            color: #333354d0 !important;
+            border-color: #333354d0 !important;
+            background-color: transparent !important;
+        }
+
+        .btn-outline-primary:hover,
+        .btn-outline-primary:focus,
+        .btn-outline-primary:active {
+            background-color: #333354d0 !important;
+            border-color: #333354d0 !important;
+            color: white !important;
+        }
+
+        /* LINKS AND TEXT */
+        .text-primary,
+        a.text-primary {
+            color: #333354d0 !important;
+        }
+
+        a.text-primary:hover,
+        a.text-primary:focus {
+            color: #333354 !important;
+        }
+
+        /* TABLE HEADERS AND SORTING */
+        .admin-table th a,
+        th.sortable a,
+        .changelist-results th a {
+            color: #333354d0 !important;
+        }
+
+        .admin-table th a:hover,
+        th.sortable a:hover,
+        .changelist-results th a:hover {
+            color: #333354 !important;
+        }
+
+        /* FORM CONTROLS */
+        .form-control:focus,
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #333354d0 !important;
+            box-shadow: 0 0 0 0.2rem rgba(51, 51, 84, 0.25) !important;
+        }
+
+        /* CHECKBOXES AND RADIO BUTTONS */
+        .form-check-input:focus {
+            border-color: #333354d0 !important;
+            box-shadow: 0 0 0 0.25rem rgba(51, 51, 84, 0.25) !important;
+        }
+
+        .form-check-input:checked,
+        input[type="checkbox"]:checked {
+            background-color: #333354d0 !important;
+            border-color: #333354d0 !important;
+        }
+
+        /* PAGINATION */
+        .page-link {
+            color: #333354d0 !important;
+        }
+
+        .page-item.active .page-link {
+            background-color: #333354d0 !important;
+            border-color: #333354d0 !important;
+            z-index: 3;
+        }
+
+        .page-link:hover {
+            color: #333354 !important;
+            background-color: rgba(51, 51, 84, 0.1) !important;
+            border-color: #333354d0 !important;
+        }
+
+        /* ADMIN OBJECT TOOLS */
+        .object-tools li a,
+        .object-tools a.addlink {
+            background-color: #333354d0 !important;
+            color: white !important;
+        }
+
+        .object-tools li a:hover,
+        .object-tools a.addlink:hover {
+            background-color: #333354 !important;
+        }
+
+        /* FILTER SIDEBAR */
+        .filter-option.selected a {
+            background-color: #333354d0 !important;
+            color: white !important;
+        }
+
+        /* PROGRESS BARS */
+        .progress-bar {
+            background-color: #333354d0 !important;
+        }
+
+        /* BADGES */
+        .badge-primary {
+            background-color: #333354d0 !important;
+        }
+
+        /* ALERTS */
+        .alert-primary {
+            color: #333354 !important;
+            background-color: rgba(51, 51, 84, 0.1) !important;
+            border-color: rgba(51, 51, 84, 0.2) !important;
+        }
+
+        /* UTILITY CLASSES */
+        .bg-primary {
+            background-color: #333354d0 !important;
+        }
+
+        .border-primary {
+            border-color: #333354d0 !important;
+        }
+
+        .text-primary {
+            color: #333354d0 !important;
+        }
+
+        /* DROPDOWN MENUS */
+        .dropdown-toggle.btn-primary {
+            background-color: #333354d0 !important;
+            border-color: #333354d0 !important;
+        }
+
+        /* CUSTOM SELECT DROPDOWNS */
+        .form-select:focus {
+            border-color: #333354d0 !important;
+            box-shadow: 0 0 0 0.25rem rgba(51, 51, 84, 0.25) !important;
+        }
+
+        /* CARD HEADERS WITH PRIMARY COLOR */
+        .card-header.bg-primary {
+            background-color: #333354d0 !important;
+            border-color: #333354d0 !important;
+        }
+
+        /* ACTION BUTTONS IN CHANGELIST */
+        .actions select option:checked {
+            background-color: #333354d0 !important;
+        }
+
+        /* BREADCRUMB LINKS */
+        .breadcrumb-item.active {
+            color: #333354d0 !important;
+        }
+
+        .breadcrumb-item a {
+            color: #333354d0 !important;
+        }
+
+        .breadcrumb-item a:hover {
+            color: #333354 !important;
+        }
+
+        /* TABS */
+        .nav-tabs .nav-link.active {
+            border-bottom-color: #333354d0 !important;
+            color: #333354d0 !important;
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: #333354d0 !important;
+        }
+
+        /* BUTTONS WITH SPECIFIC CLASSES THAT MIGHT BE USED */
+        .btn-info.bg-primary,
+        .btn-secondary.bg-primary,
+        button.bg-primary,
+        input.bg-primary {
+            background-color: #333354d0 !important;
+            border-color: #333354d0 !important;
+        }
+
+        /* BUTTON COLOR OVERRIDES - RESTO PÊCHEUR BRAND */
+        .btn-success, 
+        .btn-success:not(:disabled):not(.disabled),
+        input[type="submit"].btn-success,
+        .submit-row input[type="submit"],
+        .submit-row input[type="submit"].default { 
+            background-color: #cb5103 !important; 
+            background-image: none !important;
+            border-color: #cb5103 !important; 
+            color: white !important;
+        }
+        
+        .btn-success:hover,
+        .btn-success:focus,
+        .btn-success:active {
+            background-color: #a0420f !important; 
+            background-image: none !important;
+            border-color: #a0420f !important; 
+            color: white !important;
+        }
+        
+        .btn-info, 
+        .btn-info:not(:disabled):not(.disabled) { 
+            background-color: #333354d0 !important; 
+            background-image: none !important;
+            border-color: #333354d0 !important; 
+            color: white !important;
+        }
+        
+        .btn-info:hover,
+        .btn-info:focus,
+        .btn-info:active {
+            background-color: #333354 !important; 
+            background-image: none !important;
+            border-color: #333354 !important; 
+            color: white !important;
+        }
+
         /* REMOVE ALL CUSTOM NAVBAR STYLING - USE DEFAULT ADMIN NAVBAR */
         /* No custom navbar styling - let Django admin handle it naturally */
         
@@ -91,9 +382,9 @@
         .dashboard-header {
             background: linear-gradient(135deg, #ffffff 0%, #cb5003 105%);
             color: #ffffff;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9); /* Stronger, clearer shadow */
-            font-weight: 600; /* Bolder text */
-            font-size: 1.5rem; /* Slightly larger text */
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+            font-weight: 600;
+            font-size: 1.5rem;
             padding: 20px 25px;
             border-radius: 12px;
             margin-bottom: 25px;
@@ -370,6 +661,69 @@
             margin-bottom: 0;
         }
 
+        /* NOTIFICATION BADGE STYLING */
+        .notification-badge {
+            background: linear-gradient(45deg, #ff4444, #cc0000);
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            min-width: 18px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .notification-icon {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* ENHANCED VISUAL FEEDBACK */
+        .metric-card.urgent {
+            border-left-color: #dc3545;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
+        }
+
+        .metric-card.urgent .metric-icon {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
+
+        /* WEATHER WIDGET STYLING */
+        .weather-widget {
+            background: linear-gradient(135deg, #87CEEB, #4682B4);
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .weather-icon {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .weather-temp {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .weather-desc {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
         /* RESPONSIVE DESIGN */
         @media (max-width: 1200px) {
             .charts-row {
@@ -423,13 +777,35 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* PRINT STYLES */
+        @media print {
+            .dashboard-container {
+                background: white;
+                padding: 10px;
+            }
+            
+            .metric-card,
+            .card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+            
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-actions {
+                display: none;
+            }
+        }
     </style>
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-container">
     <div class="dashboard-header">
-        <h2> 🦐 Administration Dashboard</h2>
+        <h2>🦐 Administration Dashboard</h2>
         <p class="dashboard-subtitle">Interface de gestion des réservations et contrôle du restaurant</p>
         
         <!-- Restaurant Information Display -->
@@ -459,15 +835,22 @@
 
     <!-- METRICS ROW -->
     <div class="metrics-row">
-        <div class="metric-card today-reservations">
-            <div class="metric-icon">📅</div>
+        <div class="metric-card today-reservations {% if metrics.today_reservations > 50 %}urgent{% endif %}">
+            <div class="metric-icon">
+                <div class="notification-icon">
+                    📅
+                    {% if metrics.pending_notifications > 0 %}
+                    <span class="notification-badge">{{ metrics.pending_notifications }}</span>
+                    {% endif %}
+                </div>
+            </div>
             <div class="metric-content">
                 <span class="metric-number">{{ metrics.today_reservations|default:0 }}</span>
                 <span class="metric-label">Réservations Aujourd'hui</span>
             </div>
         </div>
         
-        <div class="metric-card available-tables">
+        <div class="metric-card available-tables {% if metrics.available_tables < 5 %}urgent{% endif %}">
             <div class="metric-icon">🍽️</div>
             <div class="metric-content">
                 <span class="metric-number">{{ metrics.available_tables|default:0 }}/{{ metrics.total_tables|default:20 }}</span>
@@ -483,7 +866,7 @@
             </div>
         </div>
         
-        <div class="metric-card occupancy">
+        <div class="metric-card occupancy {% if metrics.occupancy_rate > 90 %}urgent{% endif %}">
             <div class="metric-icon">📊</div>
             <div class="metric-content">
                 <span class="metric-number">{{ metrics.occupancy_rate|default:0 }}%</span>
@@ -499,6 +882,15 @@
             </div>
         </div>
     </div>
+
+    <!-- WEATHER WIDGET (Optional) -->
+    {% if weather_data %}
+    <div class="weather-widget">
+        <div class="weather-icon">{{ weather_data.icon|default:"☀️" }}</div>
+        <div class="weather-temp">{{ weather_data.temperature|default:"25" }}°C</div>
+        <div class="weather-desc">{{ weather_data.description|default:"Ensoleillé" }} - Parfait pour la terrasse!</div>
+    </div>
+    {% endif %}
 
     <!-- QUICK ACTIONS -->
     <div class="quick-actions">
@@ -516,6 +908,12 @@
         </a>
         <a href="/admin/reservations/specialdate/" class="action-btn secondary">
             📅 Dates Spéciales
+        </a>
+        <a href="/admin/reservations/notification/" class="action-btn primary">
+            🔔 Notifications
+            {% if metrics.unread_notifications > 0 %}
+            <span class="notification-badge">{{ metrics.unread_notifications }}</span>
+            {% endif %}
         </a>
     </div>
 
@@ -627,6 +1025,40 @@
             {% endif %}
         </div>
     </div>
+
+    <!-- EMERGENCY ALERTS -->
+    {% if emergency_alerts %}
+    <div class="card" style="border-left: 4px solid #dc3545; margin-bottom: 20px;">
+        <div class="card-header" style="background: rgba(220, 53, 69, 0.1);">
+            <h3 style="color: #dc3545;">🚨 Alertes Importantes</h3>
+        </div>
+        <div>
+            {% for alert in emergency_alerts %}
+            <div class="stat-item" style="background: rgba(220, 53, 69, 0.05);">
+                <span class="stat-label" style="color: #dc3545; font-weight: 600;">{{ alert.type }}</span>
+                <span class="stat-value" style="color: #dc3545;">{{ alert.message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- STAFF SCHEDULE (Optional) -->
+    {% if staff_schedule %}
+    <div class="card">
+        <div class="card-header">
+            <h3>👨‍🍳 Équipe Aujourd'hui</h3>
+        </div>
+        <div>
+            {% for staff in staff_schedule %}
+            <div class="stat-item">
+                <span class="stat-label">{{ staff.name }} ({{ staff.role }})</span>
+                <span class="stat-value">{{ staff.shift_start }} - {{ staff.shift_end }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <script>
@@ -676,7 +1108,13 @@ if (weeklyCtx) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
+                    cornerRadius: 6
+                }
             },
             scales: {
                 y: {
@@ -698,14 +1136,14 @@ if (weeklyCtx) {
     });
 }
 
-// Daily time slots chart - FIXED VERSION to prevent auto-scaling
+// Daily time slots chart - Enhanced version
 const dailyCtx = document.getElementById('dailyTimeSlotsChart');
 if (dailyCtx) {
     // Get the raw data from Django
     const rawChartLabels = {{ chart_data.daily_time_slots.labels|safe }};
     const rawChartData = {{ chart_data.daily_time_slots.data|safe }};
     
-    // Debug: Log what we get from Django
+    // Debug logging
     console.log('🔍 DJANGO DATA - Labels:', rawChartLabels);
     console.log('🔍 DJANGO DATA - Data:', rawChartData);
     
@@ -714,23 +1152,29 @@ if (dailyCtx) {
         console.log('❌ No data for chart');
         // Show empty state
         const chartContainer = dailyCtx.parentElement;
-        chartContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;">Aucune réservation aujourd\'hui</div>';
+        chartContainer.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#999;">
+                <div style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;">📊</div>
+                <p style="margin: 0; font-size: 1.1rem;">Aucun créneau réservé aujourd'hui</p>
+                <p style="margin: 10px 0 0 0; color: #999; font-size: 0.9rem;">Les réservations apparaîtront dans ce graphique</p>
+            </div>
+        `;
     } else {
         console.log('✅ Creating chart with data:', rawChartLabels, rawChartData);
         
         new Chart(dailyCtx, {
             type: 'bar',
             data: {
-                labels: rawChartLabels,  // Should be exactly ["17:00"]
+                labels: rawChartLabels,
                 datasets: [{
                     label: 'Réservations',
-                    data: rawChartData,    // Should be exactly [1]
+                    data: rawChartData,
                     backgroundColor: chartColors.secondary,
                     borderColor: chartColors.primary,
                     borderWidth: 1,
-                    borderRadius: 6,
-                    barPercentage: 0.8,
-                    categoryPercentage: 0.9
+                    borderRadius: 8,
+                    barPercentage: 0.7,
+                    categoryPercentage: 0.8
                 }]
             },
             options: {
@@ -739,13 +1183,17 @@ if (dailyCtx) {
                 plugins: {
                     legend: { display: false },
                     tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        cornerRadius: 6,
                         callbacks: {
                             title: function(context) {
-                                console.log('🔍 TOOLTIP - Context:', context[0]);
                                 return 'Créneau: ' + context[0].label;
                             },
                             label: function(context) {
-                                return context.parsed.y + ' réservation' + (context.parsed.y > 1 ? 's' : '');
+                                const count = context.parsed.y;
+                                return count + ' réservation' + (count > 1 ? 's' : '');
                             }
                         }
                     }
@@ -768,52 +1216,317 @@ if (dailyCtx) {
                         title: {
                             display: true,
                             text: 'Nombre de réservations',
-                            font: { size: 12, weight: 'bold' }
+                            font: { size: 12, weight: 'bold' },
+                            color: '#333354'
                         }
                     },
                     x: {
-                        type: 'category',  // CRITICAL: Force category scale
+                        type: 'category',
                         grid: { display: false },
                         ticks: {
                             maxRotation: 45,
-                            minRotation: 45,
-                            font: { size: 11 },
-                            // Remove the callback that might be causing issues
+                            minRotation: 0,
+                            font: { size: 11 }
                         },
                         title: {
                             display: true,
                             text: 'Créneaux horaires',
-                            font: { size: 12, weight: 'bold' }
+                            font: { size: 12, weight: 'bold' },
+                            color: '#333354'
                         }
                     }
                 },
                 layout: {
                     padding: { top: 10, bottom: 10 }
                 },
-                // Add interaction debugging
-                onHover: function(event, activeElements) {
-                    if (activeElements && activeElements.length > 0) {
-                        const element = activeElements[0];
-                        const dataIndex = element.index;
-                        const label = rawChartLabels[dataIndex];
-                        const value = rawChartData[dataIndex];
-                        console.log('🔍 HOVER - Index:', dataIndex, 'Label:', label, 'Value:', value);
-                    }
-                },
-                onClick: function(event, activeElements) {
-                    if (activeElements && activeElements.length > 0) {
-                        const element = activeElements[0];
-                        const dataIndex = element.index;
-                        const label = rawChartLabels[dataIndex];
-                        console.log('🔍 CLICK - Clicked on:', label, 'at index:', dataIndex);
-                    }
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutQuart'
                 }
             }
         });
         
-        // Log final confirmation
-        console.log('✅ CHART CREATED - Should show bar at:', rawChartLabels[0]);
+        console.log('✅ CHART CREATED successfully');
     }
 }
+
+// Real-time updates (Optional - requires WebSocket or AJAX polling)
+function updateMetrics() {
+    // This would fetch updated metrics from your Django backend
+    // Implementation depends on your backend API
+    console.log('🔄 Updating metrics...');
+    
+    // Example AJAX call (uncomment and modify as needed):
+    /*
+    fetch('/admin/api/dashboard-metrics/')
+        .then(response => response.json())
+        .then(data => {
+            // Update metric cards
+            document.querySelector('.today-reservations .metric-number').textContent = data.today_reservations;
+            document.querySelector('.today-guests .metric-number').textContent = data.today_guests;
+            document.querySelector('.available-tables .metric-number').textContent = `${data.available_tables}/${data.total_tables}`;
+            document.querySelector('.occupancy .metric-number').textContent = `${data.occupancy_rate}%`;
+            
+            // Update urgency classes
+            const reservationCard = document.querySelector('.today-reservations');
+            const tablesCard = document.querySelector('.available-tables');
+            const occupancyCard = document.querySelector('.occupancy');
+            
+            reservationCard.classList.toggle('urgent', data.today_reservations > 50);
+            tablesCard.classList.toggle('urgent', data.available_tables < 5);
+            occupancyCard.classList.toggle('urgent', data.occupancy_rate > 90);
+        })
+        .catch(error => console.error('Error updating metrics:', error));
+    */
+}
+
+// Update metrics every 5 minutes (optional)
+// setInterval(updateMetrics, 5 * 60 * 1000);
+
+// Enhanced notification system
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-message">${message}</span>
+            <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+        </div>
+    `;
+    
+    // Add notification styles
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#333354d0'};
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        max-width: 400px;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Add notification slide-in animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .notification-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .notification-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background 0.2s;
+    }
+    
+    .notification-close:hover {
+        background: rgba(255,255,255,0.2);
+    }
+`;
+document.head.appendChild(style);
+
+// Example usage (for testing):
+// showNotification('Nouvelle réservation reçue!', 'success');
+// showNotification('Attention: Capacité presque atteinte!', 'error');
+
+// Keyboard shortcuts for quick actions
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + N = New reservation
+    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        window.location.href = '/admin/reservations/reservation/add/';
+    }
+    
+    // Ctrl/Cmd + L = List reservations  
+    if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+        e.preventDefault();
+        window.location.href = '/admin/reservations/reservation/';
+    }
+    
+    // Ctrl/Cmd + R = Refresh dashboard
+    if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        location.reload();
+    }
+});
+
+// Print functionality
+function printDashboard() {
+    window.print();
+}
+
+// Export functionality (if needed)
+function exportDashboardData() {
+    // This would generate CSV/Excel export of current dashboard data
+    console.log('📊 Exporting dashboard data...');
+}
+
+console.log('🦐 Resto Pêcheur Dashboard Loaded Successfully!');
+console.log('💡 Keyboard shortcuts: Ctrl+N (New), Ctrl+L (List), Ctrl+R (Refresh)');
 </script>
 {% endblock %}
+/* EMERGENCY BLUE COLOR FIX - Add this at the very end of your styles */
+
+/* NUCLEAR OPTION - Override ANY blue color with maximum specificity */
+* {
+    /* Target any element with blue background */
+}
+
+*[style*="background-color: #007bff"],
+*[style*="background-color:#007bff"],
+*[style*="background: #007bff"],
+*[style*="background:#007bff"] {
+    background-color: #333354d0 !important;
+    background: #333354d0 !important;
+}
+
+*[style*="border-color: #007bff"],
+*[style*="border-color:#007bff"] {
+    border-color: #333354d0 !important;
+}
+
+*[style*="color: #007bff"],
+*[style*="color:#007bff"] {
+    color: #333354d0 !important;
+}
+
+/* Target Bootstrap's default blue classes with maximum specificity */
+body .btn-primary,
+body button.btn-primary,
+body input.btn-primary,
+body .btn.btn-primary {
+    background-color: #333354d0 !important;
+    border-color: #333354d0 !important;
+    background-image: none !important;
+}
+
+body .btn-primary:hover,
+body .btn-primary:focus,
+body .btn-primary:active,
+body button.btn-primary:hover,
+body input.btn-primary:hover {
+    background-color: #333354 !important;
+    border-color: #333354 !important;
+    background-image: none !important;
+}
+
+/* Target specific button values that might be in your interface */
+input[value="Rechercher"],
+input[value="Search"],
+input[value="Envoyer"],
+input[value="Send"],
+input[value="Submit"],
+button:contains("Rechercher"),
+button:contains("Envoyer") {
+    background-color: #333354d0 !important;
+    border-color: #333354d0 !important;
+    color: white !important;
+}
+
+input[value="Rechercher"]:hover,
+input[value="Search"]:hover,
+input[value="Envoyer"]:hover,
+input[value="Send"]:hover,
+input[value="Submit"]:hover {
+    background-color: #333354 !important;
+    border-color: #333354 !important;
+}
+
+/* If your theme uses CSS variables, override them */
+:root {
+    --bs-primary: #333354d0 !important;
+    --bs-primary-rgb: 51, 51, 84 !important;
+    --primary: #333354d0 !important;
+    --blue: #333354d0 !important;
+}
+
+/* Target any class that contains 'primary' or 'blue' */
+[class*="primary"] {
+    background-color: #333354d0 !important;
+    border-color: #333354d0 !important;
+}
+
+[class*="blue"] {
+    background-color: #333354d0 !important;
+    border-color: #333354d0 !important;
+}
+
+/* Last resort - target common blue hex values */
+*[style*="#007bff"] {
+    background-color: #333354d0 !important;
+    border-color: #333354d0 !important;
+    color: #333354d0 !important;
+}
+
+*[style*="rgb(0, 123, 255)"] {
+    background-color: #333354d0 !important;
+    border-color: #333354d0 !important;
+}
+
+/* Force override of any computed blue styles */
+.btn[style*="background-color"] {
+    background-color: #333354d0 !important;
+}
+
+.btn[class*="btn-primary"] {
+    background-color: #333354d0 !important;
+    border-color: #333354d0 !important;
+}
+
+/* Target AdminLTE or Jazzmin specific selectors */
+.btn.btn-primary.btn-flat,
+.btn.btn-primary.btn-sm,
+.btn.btn-outline-primary {
+    background-color: #333354d0 !important;
+    border-color: #333354d0 !important;
+    color: white !important;
+}
+
+/* Override any inline styles that might be applied by JavaScript */
+.btn-primary {
+    background-color: #333354d0 !important;
+    border-color: #333354d0 !important;
+    color: white !important;
+    background-image: none !important;
+}
+
+/* DEBUGGING: Add a red border to identify which elements are still blue */
+/* Uncomment the lines below to see which elements are not being targeted */
+/*
+*[style*="#007bff"],
+*[style*="rgb(0, 123, 255)"],
+.btn-primary:not([style*="#333354"]) {
+    border: 3px solid red !important;
+    outline: 2px solid yellow !important;
+}
