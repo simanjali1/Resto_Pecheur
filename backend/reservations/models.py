@@ -634,45 +634,8 @@ class SpecialDate(models.Model):
         return (self.date - timezone.now().date()).days
 
 
-# SIGNALS FOR NOTIFICATION INTEGRATION
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
-@receiver(post_save, sender=Reservation)
-def reservation_saved(sender, instance, created, **kwargs):
-    """Signal quand une réservation est sauvegardée - ENHANCED WITH NOTIFICATIONS"""
-    if created:
-        # Nouvelle réservation - créer notification pour le staff
-        try:
-            admin_user = User.objects.filter(is_superuser=True).first()
-            if admin_user:
-                Notification.objects.create(
-                    user=admin_user,
-                    title="🍽️ Nouvelle Réservation!",
-                    message=f"Nouvelle réservation de {instance.customer_name} pour {instance.number_of_guests} personnes le {instance.date.strftime('%d/%m/%Y')} à {instance.time.strftime('%H:%M')}.",
-                    message_type="new_reservation",
-                    related_reservation=instance
-                )
-                print(f"📝 Nouvelle réservation créée: {instance.customer_name} ({instance.status})")
-        except Exception as e:
-            print(f"❌ Erreur création notification: {e}")
-    
-    elif instance.status in ['Confirmée', 'confirmed']:
-        # Réservation confirmée - créer notification
-        try:
-            admin_user = User.objects.filter(is_superuser=True).first()
-            if admin_user:
-                Notification.objects.create(
-                    user=admin_user,
-                    title="✅ Réservation Confirmée",
-                    message=f"Réservation de {instance.customer_name} confirmée pour le {instance.date.strftime('%d/%m/%Y')} à {instance.time.strftime('%H:%M')}.",
-                    message_type="reservation_confirmed",
-                    related_reservation=instance
-                )
-                print(f"✅ Réservation confirmée: {instance.customer_name}")
-        except Exception as e:
-            print(f"❌ Erreur création notification: {e}")
-
+# ✅ NO MORE DUPLICATE SIGNALS HERE - All notification logic is in signals.py
+# This prevents duplicate notifications when reservations are created/updated
 
 # Utility function to get restaurant info
 def get_restaurant_info():
