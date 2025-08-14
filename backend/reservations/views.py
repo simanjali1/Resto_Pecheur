@@ -1,10 +1,10 @@
-# reservations/views.py - COMPLETE VERSION WITH SPECIAL DATES INTEGRATION
+# reservations/views.py - COMPLETE VERSION WITH EMAIL TRACKING AND DEBUG FUNCTIONS
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
 from datetime import datetime, timedelta
 from django.contrib.admin.views.decorators import staff_member_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.generic import ListView, DetailView, CreateView
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -12,7 +12,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
-from .models import RestaurantInfo, Reservation, TimeSlot, SpecialDate, get_restaurant_info
+from .models import RestaurantInfo, Reservation, TimeSlot, SpecialDate, Notification, get_restaurant_info
 from .serializers import ReservationSerializer, TimeSlotSerializer, RestaurantSerializer
 import json
 import logging
@@ -27,6 +27,370 @@ except ImportError:
     print("⚠️ WARNING: dnspython not installed. Email verification will be limited.")
 
 logger = logging.getLogger(__name__)
+
+# ===== 🆕 EMAIL DEBUG FUNCTIONS =====
+
+@api_view(['POST'])
+def test_gmail_basic(request):
+    """Step 1: Test basic Gmail SMTP connection"""
+    try:
+        from django.core.mail import send_mail
+        from django.conf import settings
+        
+        print(f"🔍 Testing basic Gmail connection...")
+        print(f"   Host: {settings.EMAIL_HOST}")
+        print(f"   Port: {settings.EMAIL_PORT}")
+        print(f"   User: {settings.EMAIL_HOST_USER}")
+        print(f"   Password: {'*' * len(settings.EMAIL_HOST_PASSWORD)}")
+        print(f"   TLS: {settings.EMAIL_USE_TLS}")
+        
+        send_mail(
+            subject='Gmail Test - Resto Pêcheur',
+            message='This is a basic Gmail connection test.',
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[settings.EMAIL_HOST_USER],
+            fail_silently=False,
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Basic Gmail test successful!',
+            'step': 'Gmail SMTP connection works'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'error_type': type(e).__name__,
+            'step': 'Gmail SMTP connection failed',
+            'next_action': 'Check Gmail app password'
+        })
+
+@api_view(['POST'])
+def test_email_utils_function(request):
+    """Step 2: Test your email utility function specifically"""
+    try:
+        # Create a test reservation
+        from .models import Reservation, User
+        from datetime import date, time
+        
+        test_reservation = Reservation(
+            customer_name='Test User',
+            customer_email='simanjali8@gmail.com',  # Your own email for testing
+            customer_phone='0661460593',
+            date=date.today(),
+            time=time(19, 0),
+            number_of_guests=2,
+            status='Confirmée'
+        )
+        
+        # Import your email function
+        from .utils.email_utils import send_reservation_confirmation_email
+        
+        print(f"🔍 Testing email utility function...")
+        print(f"   Test email: {test_reservation.customer_email}")
+        
+        result = send_reservation_confirmation_email(test_reservation, notification=None)
+        
+        return JsonResponse({
+            'success': result,
+            'message': f'Email utility test: {"SUCCESS" if result else "FAILED"}',
+            'step': 'Email utility function test',
+            'result': result
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'error_type': type(e).__name__,
+            'step': 'Email utility function failed'
+        })
+
+@api_view(['POST'])
+def test_tracking_url_generation(request):
+    """Step 3: Test URL tracking generation"""
+    try:
+        from .models import Notification, User
+        from .utils.email_utils import generate_tracking_url
+        
+        # Create a test notification
+        admin_user = User.objects.filter(is_superuser=True).first()
+        if not admin_user:
+            return JsonResponse({
+                'success': False,
+                'error': 'No admin user found',
+                'step': 'Tracking URL test failed'
+            })
+        
+        test_notification = Notification.objects.create(
+            title='Test Notification',
+            message='Test message for URL generation',
+            message_type='info',
+            user=admin_user
+        )
+        
+        tracking_url = generate_tracking_url(test_notification, "view")
+        
+        # Clean up test notification
+        test_notification.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'tracking_url': tracking_url,
+            'step': 'Tracking URL generation successful',
+            'token': str(test_notification.tracking_token)
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'error_type': type(e).__name__,
+            'step': 'Tracking URL generation failed'
+        })
+
+@api_view(['POST'])
+def test_full_email_flow(request):
+    """Step 4: Test complete email flow with a real reservation"""
+    try:
+        reservation_id = request.data.get('reservation_id')
+        if not reservation_id:
+            return JsonResponse({
+                'success': False,
+                'error': 'reservation_id required',
+                'step': 'Full email flow test'
+            })
+        
+        reservation = get_object_or_404(Reservation, id=reservation_id)
+        
+        print(f"🔍 Testing full email flow for reservation {reservation.id}")
+        print(f"   Customer: {reservation.customer_name}")
+        print(f"   Email: {reservation.customer_email}")
+        print(f"   Status: {reservation.status}")
+        
+        # Import your email function
+        from .utils.email_utils import send_reservation_confirmation_email
+        from .models import User
+        
+        # Create a notification for tracking
+        admin_user = User.objects.filter(is_superuser=True).first()
+        notification = Notification.objects.create(
+            title=f'Test Email - {reservation.customer_name}',
+            message='Testing full email flow',
+            message_type='email_success',
+            related_reservation=reservation,
+            user=admin_user
+        )
+        
+        result = send_reservation_confirmation_email(reservation, notification)
+        
+        return JsonResponse({
+            'success': result,
+            'message': f'Full email flow: {"SUCCESS" if result else "FAILED"}',
+            'step': 'Complete email flow test',
+            'reservation_id': reservation.id,
+            'customer_email': reservation.customer_email,
+            'notification_id': notification.id,
+            'tracking_token': str(notification.tracking_token)
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'error_type': type(e).__name__,
+            'step': 'Full email flow failed'
+        })
+
+@api_view(['GET'])
+def debug_email_settings(request):
+    """Step 5: Check all email-related settings"""
+    try:
+        from django.conf import settings
+        
+        email_settings = {
+            'EMAIL_BACKEND': getattr(settings, 'EMAIL_BACKEND', 'Not set'),
+            'EMAIL_HOST': getattr(settings, 'EMAIL_HOST', 'Not set'),
+            'EMAIL_PORT': getattr(settings, 'EMAIL_PORT', 'Not set'),
+            'EMAIL_USE_TLS': getattr(settings, 'EMAIL_USE_TLS', 'Not set'),
+            'EMAIL_USE_SSL': getattr(settings, 'EMAIL_USE_SSL', 'Not set'),
+            'EMAIL_HOST_USER': getattr(settings, 'EMAIL_HOST_USER', 'Not set'),
+            'EMAIL_HOST_PASSWORD': 'Set' if getattr(settings, 'EMAIL_HOST_PASSWORD', None) else 'Not set',
+            'PASSWORD_LENGTH': len(getattr(settings, 'EMAIL_HOST_PASSWORD', '')) if getattr(settings, 'EMAIL_HOST_PASSWORD', None) else 0,
+            'DEFAULT_FROM_EMAIL': getattr(settings, 'DEFAULT_FROM_EMAIL', 'Not set'),
+            'SITE_URL': getattr(settings, 'SITE_URL', 'Not set'),
+        }
+        
+        # Check if required settings are properly configured
+        issues = []
+        if email_settings['EMAIL_HOST'] != 'smtp.gmail.com':
+            issues.append('EMAIL_HOST should be smtp.gmail.com')
+        if email_settings['EMAIL_PORT'] != 587:
+            issues.append('EMAIL_PORT should be 587 for Gmail')
+        if not email_settings['EMAIL_USE_TLS']:
+            issues.append('EMAIL_USE_TLS should be True for Gmail')
+        if email_settings['EMAIL_HOST_PASSWORD'] == 'Not set':
+            issues.append('EMAIL_HOST_PASSWORD is not set')
+        if email_settings['PASSWORD_LENGTH'] != 16:
+            issues.append(f'Gmail app password should be 16 characters, got {email_settings["PASSWORD_LENGTH"]}')
+        
+        return JsonResponse({
+            'success': len(issues) == 0,
+            'settings': email_settings,
+            'issues': issues,
+            'step': 'Email settings check'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'step': 'Email settings check failed'
+        })
+
+@api_view(['GET'])
+def check_notifications_with_failed_emails(request):
+    """Step 6: Check for failed email notifications"""
+    try:
+        failed_notifications = Notification.objects.filter(
+            message_type='email_failed'
+        ).order_by('-created_at')[:10]
+        
+        failed_data = []
+        for notification in failed_notifications:
+            failed_data.append({
+                'id': notification.id,
+                'title': notification.title,
+                'message': notification.message,
+                'created_at': notification.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'customer_name': notification.customer_name,
+                'customer_email': notification.customer_email,
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'failed_notifications_count': len(failed_data),
+            'failed_notifications': failed_data,
+            'step': 'Failed notifications check'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'step': 'Failed notifications check failed'
+        })
+
+@api_view(['POST'])
+def quick_gmail_test(request):
+    """Quick Gmail connection test"""
+    try:
+        from django.core.mail import send_mail
+        from django.conf import settings
+        
+        send_mail(
+            'Quick Test - Resto Pêcheur',
+            'Testing Gmail SMTP connection quickly',
+            settings.EMAIL_HOST_USER,
+            [settings.EMAIL_HOST_USER],
+            fail_silently=False
+        )
+        return JsonResponse({'success': True, 'message': 'Quick Gmail test successful!'})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+# ===== EMAIL TRACKING VIEWS =====
+
+@csrf_exempt
+def email_tracking_view(request, token, action="view"):
+    """Handle email tracking when client clicks links"""
+    try:
+        # Find notification by tracking token
+        notification = get_object_or_404(Notification, tracking_token=token)
+        
+        # Mark email as opened by client
+        if not notification.email_opened_by_client:
+            notification.mark_email_as_opened(request)
+            
+            # Log the tracking event
+            logger.info(f"Email opened: {notification.title} by IP {notification.get_client_ip(request)}")
+            print(f"📧 Email tracking: {notification.title} opened by client")
+        
+        # Handle different actions
+        if action == "view":
+            return render(request, 'tracking/reservation_view.html', {
+                'reservation': notification.related_reservation,
+                'notification': notification,
+                'action': 'view'
+            })
+        elif action == "confirm":
+            return render(request, 'tracking/reservation_confirm.html', {
+                'reservation': notification.related_reservation,
+                'notification': notification,
+                'action': 'confirm'
+            })
+        else:
+            # Default tracking pixel (1x1 transparent GIF)
+            return tracking_pixel_response()
+    
+    except Exception as e:
+        logger.error(f"Email tracking error: {e}")
+        return HttpResponse("Lien expiré", status=404)
+
+def tracking_pixel_response():
+    """Return 1x1 transparent GIF for email tracking"""
+    # 1x1 transparent GIF in base64
+    gif_data = b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\xff\xff\xff\x00\x00\x00\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02\x04\x01\x00\x3b'
+    
+    response = HttpResponse(gif_data, content_type='image/gif')
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response
+
+# API endpoint to get tracking stats
+@require_http_methods(["GET"])
+def email_tracking_stats(request):
+    """Get email tracking statistics for admin dashboard"""
+    try:
+        # Get stats for last 30 days
+        thirty_days_ago = timezone.now() - timedelta(days=30)
+        
+        notifications = Notification.objects.filter(
+            created_at__gte=thirty_days_ago,
+            email_sent=True
+        )
+        
+        total_sent = notifications.count()
+        total_opened = notifications.filter(email_opened_by_client=True).count()
+        open_rate = (total_opened / total_sent * 100) if total_sent > 0 else 0
+        
+        # Recent openings
+        recent_openings = notifications.filter(
+            email_opened_by_client=True
+        ).order_by('-email_opened_at')[:10]
+        
+        stats = {
+            'total_sent': total_sent,
+            'total_opened': total_opened,
+            'open_rate': round(open_rate, 1),
+            'recent_openings': [
+                {
+                    'customer_name': n.related_reservation.customer_name if n.related_reservation else 'N/A',
+                    'opened_at': n.email_opened_at.strftime('%d/%m/%Y %H:%M') if n.email_opened_at else 'N/A',
+                    'title': n.title
+                }
+                for n in recent_openings
+            ]
+        }
+        
+        return JsonResponse(stats)
+        
+    except Exception as e:
+        logger.error(f"Email stats error: {e}")
+        return JsonResponse({'error': 'Erreur lors du calcul des statistiques'}, status=500)
 
 # ===== EMAIL VERIFICATION ENDPOINT =====
 
@@ -670,9 +1034,12 @@ class ReservationDetailView(generics.RetrieveUpdateDestroyAPIView):
 @api_view(['GET'])
 @staff_member_required
 def dashboard_stats(request):
-    """Basic dashboard statistics API"""
+    """Basic dashboard statistics API with email tracking stats"""
     today = timezone.now().date()
     restaurant = get_restaurant_info()
+    
+    # Get email tracking stats
+    email_stats = Notification.get_email_stats(days=30)
     
     stats = {
         'restaurant_name': restaurant.name,
@@ -684,6 +1051,15 @@ def dashboard_stats(request):
         'confirmed_reservations': Reservation.objects.filter(status='Confirmée').count(),
         'occupancy_rate': restaurant.get_occupancy_rate_today(),
         'available_tables': restaurant.get_available_tables_today(),
+        
+        # Email tracking stats
+        'email_stats': {
+            'total_sent': email_stats['total_sent'],
+            'total_opened': email_stats['total_opened'],
+            'open_rate': email_stats['open_rate'],
+            'unread_notifications': Notification.get_unread_count(),
+            'urgent_notifications': Notification.get_urgent_count()
+        }
     }
     
     return JsonResponse(stats)
@@ -704,6 +1080,80 @@ def update_reservation_status(request, reservation_id):
         else:
             return JsonResponse({'error': 'Invalid status'}, status=400)
             
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+# ===== NOTIFICATION API VIEWS =====
+
+@api_view(['GET'])
+@staff_member_required
+def notification_list(request):
+    """Get all notifications for admin dashboard"""
+    try:
+        notifications = Notification.objects.all()[:50]  # Limit to 50 most recent
+        
+        notification_data = []
+        for notification in notifications:
+            notification_data.append({
+                'id': notification.id,
+                'title': notification.title,
+                'message': notification.message,
+                'message_type': notification.message_type,
+                'priority': notification.priority,
+                'is_read': notification.is_read,
+                'created_at': notification.created_at.strftime('%d/%m/%Y %H:%M'),
+                'time_ago': notification.time_ago,
+                'customer_name': notification.customer_name,
+                'customer_phone': notification.customer_phone,
+                'customer_email': notification.customer_email,
+                'reservation_date': notification.reservation_date,
+                'reservation_time': notification.reservation_time,
+                
+                # Email tracking info
+                'email_sent': notification.email_sent,
+                'email_opened_by_client': notification.email_opened_by_client,
+                'email_status_display': notification.email_status_display,
+                'tracking_token': str(notification.tracking_token)
+            })
+        
+        return JsonResponse({
+            'notifications': notification_data,
+            'unread_count': Notification.get_unread_count(),
+            'urgent_count': Notification.get_urgent_count()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting notifications: {e}")
+        return JsonResponse({'error': 'Erreur lors de la récupération des notifications'}, status=500)
+
+@api_view(['POST'])
+@staff_member_required
+def mark_notification_read(request, notification_id):
+    """Mark a notification as read"""
+    try:
+        notification = get_object_or_404(Notification, id=notification_id)
+        notification.mark_as_read()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Notification marked as read'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+@staff_member_required
+def mark_all_notifications_read(request):
+    """Mark all notifications as read"""
+    try:
+        count = Notification.mark_all_as_read()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'{count} notifications marked as read'
+        })
+        
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -825,7 +1275,7 @@ def get_next_available_slot():
 
 @staff_member_required
 def dashboard_view(request):
-    """Main unified dashboard view with all functionalities"""
+    """Main unified dashboard view with all functionalities including email tracking"""
     today = timezone.now().date()
     now = timezone.now()
     week_start = today - timedelta(days=today.weekday())
@@ -833,6 +1283,9 @@ def dashboard_view(request):
     
     # Get restaurant instance (single instance)
     restaurant = get_restaurant_info()
+    
+    # Get email tracking stats
+    email_stats = Notification.get_email_stats(days=30)
     
     # Basic metrics
     metrics = {
@@ -856,6 +1309,13 @@ def dashboard_view(request):
         # Restaurant info
         'restaurant_name': restaurant.name,
         'restaurant_capacity': restaurant.capacity,
+        
+        # Email tracking metrics
+        'email_sent_count': email_stats['total_sent'],
+        'email_opened_count': email_stats['total_opened'],
+        'email_open_rate': email_stats['open_rate'],
+        'unread_notifications': Notification.get_unread_count(),
+        'urgent_notifications': Notification.get_urgent_count()
     }
     
     # Recent reservations (last 24 hours)
@@ -868,12 +1328,17 @@ def dashboard_view(request):
         date=today
     ).order_by('time')
     
+    # Recent notifications with email tracking info
+    recent_notifications = Notification.objects.all()[:10]
+    
     context = {
         'metrics': metrics,
         'recent_reservations': recent_reservations,
         'todays_schedule': todays_schedule,
+        'recent_notifications': recent_notifications,
         'restaurant': restaurant,
         'email_verification_available': DNS_AVAILABLE,
+        'email_stats': email_stats
     }
     
     return render(request, 'admin/unified_dashboard_with_sidebar.html', context)
@@ -881,10 +1346,13 @@ def dashboard_view(request):
 # API endpoints for AJAX updates
 @staff_member_required
 def dashboard_api_metrics(request):
-    """API endpoint for real-time metrics"""
+    """API endpoint for real-time metrics with email tracking"""
     today = timezone.now().date()
     now = timezone.now()
     restaurant = get_restaurant_info()
+    
+    # Get email stats
+    email_stats = Notification.get_email_stats(days=30)
     
     metrics = {
         'restaurant_name': restaurant.name,
@@ -901,25 +1369,223 @@ def dashboard_api_metrics(request):
         'total_capacity': restaurant.capacity,
         'total_tables': restaurant.number_of_tables,
         'email_verification_available': DNS_AVAILABLE,
+        
+        # Email tracking metrics
+        'email_stats': {
+            'total_sent': email_stats['total_sent'],
+            'total_opened': email_stats['total_opened'],
+            'open_rate': email_stats['open_rate'],
+            'unread_notifications': Notification.get_unread_count(),
+            'urgent_notifications': Notification.get_urgent_count()
+        }
     }
     
     return JsonResponse(metrics)
 
 @staff_member_required
 def dashboard_api_recent(request):
-    """API endpoint for recent reservations"""
+    """API endpoint for recent reservations and notifications"""
     now = timezone.now()
-    recent = Reservation.objects.filter(
+    recent_reservations = Reservation.objects.filter(
         created_at__gte=now - timedelta(hours=1)
     ).order_by('-created_at')[:5]
     
-    data = []
-    for reservation in recent:
-        data.append({
+    recent_notifications = Notification.objects.filter(
+        is_read=False
+    ).order_by('-created_at')[:5]
+    
+    reservations_data = []
+    for reservation in recent_reservations:
+        reservations_data.append({
             'customer_name': reservation.customer_name,
             'party_size': reservation.number_of_guests,
             'time': reservation.created_at.strftime('%H:%M'),
             'status': reservation.status
         })
     
-    return JsonResponse({'recent_reservations': data})
+    notifications_data = []
+    for notification in recent_notifications:
+        notifications_data.append({
+            'title': notification.title,
+            'message': notification.message[:100] + '...' if len(notification.message) > 100 else notification.message,
+            'priority': notification.priority,
+            'time_ago': notification.time_ago,
+            'email_opened': notification.email_opened_by_client,
+            'customer_name': notification.customer_name
+        })
+    
+    return JsonResponse({
+        'recent_reservations': reservations_data,
+        'recent_notifications': notifications_data
+    })
+
+# ===== EMAIL TRACKING ANALYTICS ENDPOINTS =====
+
+@api_view(['GET'])
+@staff_member_required
+def email_analytics_summary(request):
+    """Get comprehensive email analytics"""
+    try:
+        # Get different time periods
+        periods = {
+            'today': 1,
+            'week': 7,
+            'month': 30,
+            'quarter': 90
+        }
+        
+        analytics = {}
+        
+        for period_name, days in periods.items():
+            cutoff_date = timezone.now() - timedelta(days=days)
+            
+            notifications = Notification.objects.filter(
+                created_at__gte=cutoff_date,
+                email_sent=True
+            )
+            
+            total_sent = notifications.count()
+            total_opened = notifications.filter(email_opened_by_client=True).count()
+            open_rate = (total_opened / total_sent * 100) if total_sent > 0 else 0
+            
+            analytics[period_name] = {
+                'total_sent': total_sent,
+                'total_opened': total_opened,
+                'open_rate': round(open_rate, 1)
+            }
+        
+        # Get top performing email types
+        email_types_stats = []
+        for message_type, display_name in Notification.MESSAGE_TYPES:
+            notifications = Notification.objects.filter(
+                message_type=message_type,
+                email_sent=True,
+                created_at__gte=timezone.now() - timedelta(days=30)
+            )
+            
+            total = notifications.count()
+            opened = notifications.filter(email_opened_by_client=True).count()
+            
+            if total > 0:
+                email_types_stats.append({
+                    'type': message_type,
+                    'display_name': display_name,
+                    'total_sent': total,
+                    'total_opened': opened,
+                    'open_rate': round((opened / total * 100), 1)
+                })
+        
+        # Sort by open rate
+        email_types_stats.sort(key=lambda x: x['open_rate'], reverse=True)
+        
+        return JsonResponse({
+            'periods': analytics,
+            'email_types_performance': email_types_stats,
+            'summary': {
+                'best_performing_type': email_types_stats[0] if email_types_stats else None,
+                'average_open_rate': round(sum(t['open_rate'] for t in email_types_stats) / len(email_types_stats), 1) if email_types_stats else 0
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Email analytics error: {e}")
+        return JsonResponse({'error': 'Erreur lors du calcul des analytics'}, status=500)
+
+@api_view(['GET'])
+@staff_member_required
+def email_tracking_details(request, notification_id):
+    """Get detailed tracking info for a specific notification"""
+    try:
+        notification = get_object_or_404(Notification, id=notification_id)
+        
+        details = {
+            'notification_id': notification.id,
+            'title': notification.title,
+            'message_type': notification.message_type,
+            'priority': notification.priority,
+            'created_at': notification.created_at.strftime('%d/%m/%Y %H:%M'),
+            
+            # Email info
+            'email_sent': notification.email_sent,
+            'email_sent_at': notification.email_sent_at.strftime('%d/%m/%Y %H:%M') if notification.email_sent_at else None,
+            
+            # Client tracking
+            'email_opened_by_client': notification.email_opened_by_client,
+            'email_opened_at': notification.email_opened_at.strftime('%d/%m/%Y %H:%M') if notification.email_opened_at else None,
+            'client_ip': notification.client_ip,
+            'client_user_agent': notification.client_user_agent,
+            
+            # Reservation info
+            'customer_name': notification.customer_name,
+            'customer_email': notification.customer_email,
+            'customer_phone': notification.customer_phone,
+            'reservation_date': notification.reservation_date,
+            'reservation_time': notification.reservation_time,
+            
+            # Tracking URL
+            'tracking_token': str(notification.tracking_token),
+            'tracking_url': request.build_absolute_uri(f'/track/{notification.tracking_token}/view/')
+        }
+        
+        return JsonResponse(details)
+        
+    except Exception as e:
+        logger.error(f"Email tracking details error: {e}")
+        return JsonResponse({'error': 'Erreur lors de la récupération des détails'}, status=500)
+
+# ===== UTILITY ENDPOINTS =====
+
+@api_view(['POST'])
+@staff_member_required
+def test_email_tracking(request):
+    """Test email tracking system"""
+    try:
+        reservation_id = request.data.get('reservation_id')
+        
+        if not reservation_id:
+            return JsonResponse({'error': 'reservation_id required'}, status=400)
+        
+        reservation = get_object_or_404(Reservation, id=reservation_id)
+        
+        # Import the test function
+        from .signals import test_email_confirmation_with_tracking
+        
+        result = test_email_confirmation_with_tracking(reservation_id)
+        
+        if result:
+            return JsonResponse({
+                'success': True,
+                'message': f'Test email sent to {reservation.customer_email}',
+                'reservation': reservation.customer_name
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': 'Failed to send test email'
+            })
+        
+    except Exception as e:
+        logger.error(f"Test email error: {e}")
+        return JsonResponse({'error': str(e)}, status=500)
+
+@api_view(['POST'])
+@staff_member_required
+def cleanup_old_data(request):
+    """Cleanup old notifications and tracking data"""
+    try:
+        days = request.data.get('days', 30)
+        
+        # Import cleanup function
+        from .signals import cleanup_old_notifications
+        
+        count = cleanup_old_notifications(days=days)
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Cleaned up {count} old notifications',
+            'deleted_count': count
+        })
+        
+    except Exception as e:
+        logger.error(f"Cleanup error: {e}")
+        return JsonResponse({'error': str(e)}, status=500)

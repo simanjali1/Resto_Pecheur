@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Votre Réservation - Resto Pêcheur</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px; 
+            background: #f5f5f5; 
+            line-height: 1.6;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        .header { 
+            text-align: center; 
+            color: #2c5aa0; 
+            margin-bottom: 30px; 
+        }
+        .reservation-details { 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin: 20px 0;
+        }
+        .detail-row { 
+            display: flex; 
+            justify-content: space-between; 
+            margin: 10px 0; 
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .status { 
+            padding: 15px; 
+            text-align: center; 
+            border-radius: 5px; 
+            margin: 20px 0; 
+            font-weight: bold;
+        }
+        .status.confirmed { 
+            background: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb;
+        }
+        .status.pending { 
+            background: #fff3cd; 
+            color: #856404; 
+            border: 1px solid #ffeaa7;
+        }
+        .contact-info {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #e9ecef;
+            border-radius: 5px;
+        }
+        .contact-info p {
+            margin: 5px 0;
+        }
+        .restaurant-name {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .tracking-info {
+            font-size: 0.8em;
+            color: #666;
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="restaurant-name">🍽️ Resto Pêcheur</div>
+            <h2>Détails de votre réservation</h2>
+        </div>
+        
+        {% if reservation %}
+        <div class="reservation-details">
+            <div class="detail-row">
+                <strong>Nom:</strong>
+                <span>{{ reservation.customer_name }}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Date:</strong>
+                <span>{{ reservation.date|date:"d F Y" }}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Heure:</strong>
+                <span>{{ reservation.time|time:"H:i" }}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Nombre de personnes:</strong>
+                <span>{{ reservation.number_of_guests }} personne{{ reservation.number_of_guests|pluralize }}</span>
+            </div>
+            {% if reservation.special_requests %}
+            <div class="detail-row">
+                <strong>Demandes spéciales:</strong>
+                <span>{{ reservation.special_requests }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="status {% if reservation.status == 'Confirmée' %}confirmed{% else %}pending{% endif %}">
+                Statut: {{ reservation.status }}
+            </div>
+        </div>
+        
+        <div class="contact-info">
+            <p><strong>📞 Pour toute question: 0661-460593</strong></p>
+            <p>📍 Route De Tafraout Quartier Industriel, Tiznit 85000</p>
+            <p>📧 Email: contact@resto-pecheur.ma</p>
+            <p>🌐 Site web: www.restopecheur.ma</p>
+        </div>
+        
+        <div class="tracking-info">
+            <p>📊 Email suivi - {{ notification.created_at|date:"d/m/Y H:i" }}</p>
+            <p>Cette page confirme la réception de votre email de réservation</p>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 40px;">
+            <h3>Réservation introuvable</h3>
+            <p>Cette réservation n'existe plus ou le lien a expiré.</p>
+        </div>
+        {% endif %}
+        
+        <div style="text-align: center; margin-top: 30px; font-size: 0.9em; color: #666;">
+            <p>Merci de votre confiance !</p>
+        </div>
+    </div>
+</body>
+</html>

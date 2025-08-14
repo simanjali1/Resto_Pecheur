@@ -866,14 +866,14 @@
             </div>
         </div>
         
-        <div class="metric-card occupancy {% if metrics.occupancy_rate > 90 %}urgent{% endif %}">
+        <div class="metric-card occupancy {% if metrics.today_guests > 45 %}urgent{% endif %}">
             <div class="metric-icon">📊</div>
             <div class="metric-content">
-                <span class="metric-number">{{ metrics.occupancy_rate|default:0 }}%</span>
-                <span class="metric-label">Taux d'Occupation</span>
+                <span class="metric-number">{{ metrics.today_guests|default:0 }}/{{ metrics.restaurant_capacity|default:50 }}</span>
+                <span class="metric-label">Occupation</span>
             </div>
         </div>
-        
+                
         <div class="metric-card peak-hour">
             <div class="metric-icon">⏰</div>
             <div class="metric-content">
@@ -916,7 +916,34 @@
             {% endif %}
         </a>
     </div>
-
+   
+    <!-- TODAY'S SCHEDULE -->
+    <div class="schedule-card">
+        <div class="card-header">
+            <h3>📅 Planning d'Aujourd'hui {% if todays_schedule %}({{ todays_schedule|length }} réservation{{ todays_schedule|length|pluralize }}){% endif %}</h3>
+        </div>
+        <div>
+            {% if todays_schedule %}
+                {% for reservation in todays_schedule %}
+                <div class="schedule-item">
+                    <div class="schedule-time">{{ reservation.time|time:"H:i" }}</div>
+                    <div class="schedule-customer">{{ reservation.customer_name }}</div>
+                    <div class="schedule-details">
+                        {{ reservation.number_of_guests }} pers.
+                        <span class="status-badge status-{{ reservation.status }}">{{ reservation.status }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="padding: 30px; text-align: center; color: #6c757d;">
+                    <div style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;">📅</div>
+                    <p style="margin: 0; font-size: 1.1rem;">Aucune réservation pour aujourd'hui</p>
+                    <p style="margin: 10px 0 0 0; color: #999; font-size: 0.9rem;">Une journée calme au restaurant</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
     <!-- CHARTS ROW -->
     <div class="charts-row">
         <div class="card">
@@ -976,11 +1003,11 @@
                     <span class="stat-value">{{ metrics.month_reservations|default:0 }} réservations</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">En Attente</span>
+                    <span class="stat-label">En Attente (auj)</span>
                     <span class="stat-value">{{ metrics.today_pending|default:0 }} demandes</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">Confirmées</span>
+                    <span class="stat-label">Confirmées (auj)</span>
                     <span class="stat-value">{{ metrics.today_confirmed|default:0 }} confirmées</span>
                 </div>
                 <div class="stat-item">
@@ -988,43 +1015,17 @@
                     <span class="stat-value">{{ metrics.next_available_slot|default:"Disponible" }}</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">Capacité utilisée</span>
-                    <span class="stat-value">{{ metrics.occupancy_rate|default:0 }}%</span>
+                    <span class="stat-label">Capacité utilisée (auj)</span>
+                    <span class="stat-value">
+                        {{ metrics.today_guests|default:0 }}/{{ metrics.restaurant_capacity|default:50 }}
+                    </span>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-label">Moyenne par jour</span>
-                    <span class="stat-value">{{ metrics.daily_average|default:0 }} réservations</span>
-                </div>
+               
             </div>
         </div>
     </div>
 
-    <!-- TODAY'S SCHEDULE -->
-    <div class="schedule-card">
-        <div class="card-header">
-            <h3>📅 Planning d'Aujourd'hui {% if todays_schedule %}({{ todays_schedule|length }} réservation{{ todays_schedule|length|pluralize }}){% endif %}</h3>
-        </div>
-        <div>
-            {% if todays_schedule %}
-                {% for reservation in todays_schedule %}
-                <div class="schedule-item">
-                    <div class="schedule-time">{{ reservation.time|time:"H:i" }}</div>
-                    <div class="schedule-customer">{{ reservation.customer_name }}</div>
-                    <div class="schedule-details">
-                        {{ reservation.number_of_guests }} pers.
-                        <span class="status-badge status-{{ reservation.status }}">{{ reservation.status }}</span>
-                    </div>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div style="padding: 30px; text-align: center; color: #6c757d;">
-                    <div style="font-size: 3rem; margin-bottom: 15px; opacity: 0.3;">📅</div>
-                    <p style="margin: 0; font-size: 1.1rem;">Aucune réservation pour aujourd'hui</p>
-                    <p style="margin: 10px 0 0 0; color: #999; font-size: 0.9rem;">Une journée calme au restaurant</p>
-                </div>
-            {% endif %}
-        </div>
-    </div>
+  
 
     <!-- EMERGENCY ALERTS -->
     {% if emergency_alerts %}

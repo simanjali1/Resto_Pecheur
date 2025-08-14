@@ -1,0 +1,3 @@
+Email error for aminaaa: 'Notification' object has no attribute 'mark_email_as_failed'
+Email error for cc: 'Notification' object has no attribute 'mark_email_as_failed'
+Email error for cccccc: Reverse for 'email_tracking' with keyword arguments '{'token': UUID('ea16312f-ce52-4343-9763-fc5b89610b0b'), 'action': 'view'}' not found. 1 pattern(s) tried: ['track/(?P<token>[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/\\Z']

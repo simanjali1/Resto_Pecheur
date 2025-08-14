@@ -5,12 +5,13 @@ from django.utils import timezone
 from django.db.models import Q, Count, Sum
 from datetime import datetime, timedelta, date
 from collections import defaultdict
+import uuid
 
 
-# SIMPLIFIED NOTIFICATION MODEL - Replace your current Notification class with this
+# ENHANCED NOTIFICATION MODEL WITH EMAIL TRACKING
 
 class Notification(models.Model):
-    """Simple admin message system - like SMS messages"""
+    """Admin notification system with email tracking capabilities"""
     
     MESSAGE_TYPES = [
         ('new_reservation', '📨 Nouvelle Réservation'),
@@ -52,10 +53,23 @@ class Notification(models.Model):
         verbose_name="Réservation liée"
     )
     
-    # Status
-    is_read = models.BooleanField(default=False, verbose_name="Lu")
+    # Admin read status
+    is_read = models.BooleanField(default=False, verbose_name="Lu par admin")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Créé le")
-    read_at = models.DateTimeField(null=True, blank=True, verbose_name="Lu le")
+    read_at = models.DateTimeField(null=True, blank=True, verbose_name="Lu par admin le")
+    
+    # ✅ EMAIL TRACKING FIELDS
+    email_sent = models.BooleanField(default=False, verbose_name="Email envoyé")
+    email_sent_at = models.DateTimeField(null=True, blank=True, verbose_name="Email envoyé le")
+    
+    # Client email tracking
+    email_opened_by_client = models.BooleanField(default=False, verbose_name="Email ouvert par client")
+    email_opened_at = models.DateTimeField(null=True, blank=True, verbose_name="Email ouvert le")
+    client_ip = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP du client")
+    client_user_agent = models.TextField(null=True, blank=True, verbose_name="Navigateur client")
+    
+    # Tracking token for email links
+    tracking_token = models.UUIDField(default=uuid.uuid4, unique=True, verbose_name="Token de suivi")
     
     # Admin user (usually superuser)
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Utilisateur")
@@ -68,20 +82,190 @@ class Notification(models.Model):
             models.Index(fields=['created_at']),
             models.Index(fields=['is_read']),
             models.Index(fields=['priority', 'is_read']),
+            # Email tracking indexes
+            models.Index(fields=['tracking_token']),
+            models.Index(fields=['email_opened_by_client']),
+            models.Index(fields=['is_read', 'email_opened_by_client']),
         ]
     
     def __str__(self):
+        """Enhanced __str__ method showing CLIENT email tracking status"""
         priority_icon = "🔴" if self.priority == 'urgent' else "🟡" if self.priority == 'normal' else "🟢"
-        read_status = "✓" if self.is_read else "●"
+        
+        # ✅ EMAIL TRACKING STATUS (what client did with the email)
+        if not self.email_sent:
+            read_status = "●"     # ● Red dot = Email failed to send
+        elif self.email_sent and self.email_opened_by_client:
+            read_status = "✓✓"   # ✓✓ Double checkmarks = Client opened/seen the email
+        elif self.email_sent and not self.email_opened_by_client:
+            read_status = "✓"    # ✓ Single checkmark = Email sent but client hasn't seen it yet
+        else:
+            read_status = "●"     # Default fallback
+            
         return f"{priority_icon} {read_status} {self.title}"
     
+    @property
+    def admin_read_display(self):
+        """Separate property for admin read status"""
+        return "Lu" if self.is_read else "Non lu"
+
+    @property 
+    def email_tracking_display(self):
+        """Detailed email tracking status for admin interface"""
+        if not self.email_sent:
+            return "❌ Email non envoyé"
+        elif self.email_opened_by_client:
+            return f"👁️ Email ouvert {self.time_since_opened}"
+        else:
+            return f"📤 Email envoyé {self.time_since_sent}"
+    
     def mark_as_read(self):
-        """Mark message as read"""
+        """Mark message as read by admin"""
         if not self.is_read:
             self.is_read = True
             self.read_at = timezone.now()
             self.save(update_fields=['is_read', 'read_at'])
     
+    # ✅ EMAIL TRACKING METHODS
+    def mark_email_as_opened(self, request=None):
+        """Mark email as opened by client"""
+        if not self.email_opened_by_client:
+            self.email_opened_by_client = True
+            self.email_opened_at = timezone.now()
+            
+            # Capture client info if request provided
+            if request:
+                self.client_ip = self.get_client_ip(request)
+                self.client_user_agent = request.META.get('HTTP_USER_AGENT', '')[:500]
+            
+            self.save(update_fields=[
+                'email_opened_by_client', 
+                'email_opened_at', 
+                'client_ip', 
+                'client_user_agent'
+            ])
+            
+            print(f"📧 Email opened by client for: {self.title}")
+    
+    def mark_email_as_sent(self):
+        """Mark email as successfully sent"""
+        self.email_sent = True
+        self.email_sent_at = timezone.now()
+        self.save(update_fields=['email_sent', 'email_sent_at'])
+    
+    @staticmethod
+    def get_client_ip(request):
+        """Get client IP from request"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+    
+    # ✅ EMAIL STATUS PROPERTIES
+    @property
+    def email_status_display(self):
+        """Display email status for admin"""
+        if not self.email_sent:
+            return "❌ Non envoyé"
+        elif self.email_opened_by_client:
+            return f"👁️ Ouvert {self.time_since_opened}"
+        else:
+            return f"📤 Envoyé {self.time_since_sent}"
+    
+    @property
+    def time_since_opened(self):
+        """Time since email was opened"""
+        if not self.email_opened_at:
+            return ""
+        
+        diff = timezone.now() - self.email_opened_at
+        if diff.days > 0:
+            return f"il y a {diff.days}j"
+        elif diff.seconds > 3600:
+            return f"il y a {diff.seconds // 3600}h"
+        else:
+            return f"il y a {diff.seconds // 60}min"
+    
+    @property
+    def time_since_sent(self):
+        """Time since email was sent"""
+        if not self.email_sent_at:
+            return ""
+        
+        diff = timezone.now() - self.email_sent_at
+        if diff.days > 0:
+            return f"il y a {diff.days}j"
+        elif diff.seconds > 3600:
+            return f"il y a {diff.seconds // 3600}h"
+        else:
+            return f"il y a {diff.seconds // 60}min"
+    
+    # ✅ ENHANCED: Add email tracking summary property for admin display
+    @property
+    def admin_summary(self):
+        """Summary for admin with email tracking info"""
+        if not self.related_reservation:
+            return self.message[:100] + "..." if len(self.message) > 100 else self.message
+        
+        # Base reservation info
+        summary = f"📅 {self.reservation_date} à {self.reservation_time} | 👥 {self.related_reservation.number_of_guests} pers."
+        
+        # Add email tracking info
+        if self.email_sent:
+            if self.email_opened_by_client:
+                summary += f" | {self.email_status_display}"
+            else:
+                summary += f" | 📧 Envoyé (non ouvert)"
+        else:
+            summary += f" | ❌ Email non envoyé"
+        
+        return summary
+    
+    # ✅ EMAIL TRACKING METHODS
+    def get_tracking_url(self):
+        """Get the tracking URL for this notification"""
+        from django.conf import settings
+        from django.urls import reverse
+        
+        try:
+            base_url = getattr(settings, 'SITE_URL', 'http://localhost:8000')
+            tracking_url = reverse('email_tracking', kwargs={'token': self.tracking_token})
+            return f"{base_url}{tracking_url}"
+        except:
+            return None
+    
+    def refresh_email_status(self):
+        """Refresh the notification message with current email tracking status"""
+        if not self.email_sent or not self.related_reservation:
+            return False
+        
+        # Update any static tracking status with dynamic status
+        old_message = self.message
+        
+        # Replace old tracking patterns with current status
+        import re
+        
+        # Pattern 1: "📊 Tracking: Email non ouvert" or "📊 Tracking: Email ouvert"
+        pattern1 = r"📊 Tracking: Email (non )?ouvert"
+        replacement1 = f"📊 Status: {self.email_status_display}"
+        
+        # Pattern 2: Any line starting with "📊 Status:" (update it)
+        pattern2 = r"📊 Status: .*"
+        replacement2 = f"📊 Status: {self.email_status_display}"
+        
+        new_message = re.sub(pattern1, replacement1, old_message)
+        new_message = re.sub(pattern2, replacement2, new_message)
+        
+        if new_message != old_message:
+            self.message = new_message
+            self.save(update_fields=['message'])
+            return True
+        
+        return False
+    
+    # ✅ EXISTING: Properties (unchanged)
     @property
     def is_urgent(self):
         """Check if message is urgent"""
@@ -140,6 +324,7 @@ class Notification(models.Model):
         else:
             return "À l'instant"
     
+    # ✅ CLASS METHODS
     @classmethod
     def create_simple_message(cls, title, message, message_type='info', priority='normal', reservation=None):
         """Helper method to create simple messages"""
@@ -179,6 +364,28 @@ class Notification(models.Model):
         """Clean up old read messages"""
         cutoff_date = timezone.now() - timedelta(days=days)
         return cls.objects.filter(is_read=True, read_at__lt=cutoff_date).delete()
+    
+    # ✅ EMAIL TRACKING CLASS METHODS
+    @classmethod
+    def get_email_stats(cls, days=30):
+        """Get email tracking statistics"""
+        cutoff_date = timezone.now() - timedelta(days=days)
+        
+        notifications = cls.objects.filter(
+            created_at__gte=cutoff_date,
+            email_sent=True
+        )
+        
+        total_sent = notifications.count()
+        total_opened = notifications.filter(email_opened_by_client=True).count()
+        open_rate = (total_opened / total_sent * 100) if total_sent > 0 else 0
+        
+        return {
+            'total_sent': total_sent,
+            'total_opened': total_opened,
+            'open_rate': round(open_rate, 1),
+            'period_days': days
+        }
 
 
 class RestaurantInfo(models.Model):
@@ -224,7 +431,7 @@ class RestaurantInfo(models.Model):
         """Charge ou crée l'instance unique du restaurant"""
         obj, created = cls.objects.get_or_create(pk=1, defaults={
             'name': 'Resto Pêcheur',
-            'address': 'Tangier, Morocco',
+            'address': 'Route De Tafraout Quartier Industriel, Tiznit 85000 Maroc',
             'phone': '0661-460593',
             'email': 'contact@resto-pecheur.ma',
             'capacity': 50,
@@ -677,3 +884,130 @@ def get_status_distribution():
         print(f"  '{status}': {count} réservations")
     
     return dict([(status, Reservation.objects.filter(status=status).count()) for status in all_statuses])
+
+
+# ✅ NEW: Utility functions for email tracking management
+def refresh_all_notification_tracking():
+    """Refresh all notification messages with current email tracking status"""
+    try:
+        notifications_with_emails = Notification.objects.filter(
+            email_sent=True,
+            related_reservation__isnull=False
+        )
+        
+        updated_count = 0
+        
+        for notification in notifications_with_emails:
+            if notification.refresh_email_status():
+                updated_count += 1
+        
+        print(f"✅ Updated {updated_count} notifications with current tracking status")
+        return updated_count
+        
+    except Exception as e:
+        print(f"❌ Error refreshing notification tracking: {e}")
+        return 0
+
+
+def get_email_tracking_summary():
+    """Get comprehensive email tracking summary"""
+    try:
+        # Get basic stats
+        total_notifications = Notification.objects.filter(email_sent=True).count()
+        opened_notifications = Notification.objects.filter(
+            email_sent=True, 
+            email_opened_by_client=True
+        ).count()
+        
+        # Calculate open rate
+        open_rate = (opened_notifications / total_notifications * 100) if total_notifications > 0 else 0
+        
+        # Get recent activity (last 7 days)
+        seven_days_ago = timezone.now() - timedelta(days=7)
+        recent_notifications = Notification.objects.filter(
+            email_sent=True,
+            email_sent_at__gte=seven_days_ago
+        )
+        
+        recent_opened = recent_notifications.filter(email_opened_by_client=True).count()
+        recent_total = recent_notifications.count()
+        recent_open_rate = (recent_opened / recent_total * 100) if recent_total > 0 else 0
+        
+        # Get customers who haven't opened emails
+        unread_notifications = Notification.objects.filter(
+            email_sent=True,
+            email_opened_by_client=False,
+            email_sent_at__gte=seven_days_ago
+        ).select_related('related_reservation')
+        
+        summary = {
+            'total_emails_sent': total_notifications,
+            'total_emails_opened': opened_notifications,
+            'overall_open_rate': round(open_rate, 1),
+            'recent_emails_sent': recent_total,
+            'recent_emails_opened': recent_opened,
+            'recent_open_rate': round(recent_open_rate, 1),
+            'unread_emails_count': unread_notifications.count(),
+            'customers_need_followup': [
+                {
+                    'customer_name': n.customer_name,
+                    'customer_email': n.customer_email,
+                    'sent_at': n.email_sent_at.strftime('%d/%m/%Y %H:%M'),
+                    'days_ago': (timezone.now() - n.email_sent_at).days
+                }
+                for n in unread_notifications[:10]  # Limit to 10
+            ]
+        }
+        
+        return summary
+        
+    except Exception as e:
+        print(f"❌ Error getting email tracking summary: {e}")
+        return None
+
+
+def cleanup_old_email_tracking_data(days=90):
+    """Clean up old email tracking data while preserving important statistics"""
+    try:
+        cutoff_date = timezone.now() - timedelta(days=days)
+        
+        # Only clean up very old, read notifications with no recent email activity
+        old_notifications = Notification.objects.filter(
+            is_read=True,
+            read_at__lt=cutoff_date,
+            email_sent_at__lt=cutoff_date
+        ).exclude(
+            # Keep notifications that were recently opened
+            email_opened_at__gte=timezone.now() - timedelta(days=30)
+        )
+        
+        # Log some stats before deletion
+        tracking_stats = []
+        for notification in old_notifications[:20]:  # Sample first 20
+            if notification.email_sent:
+                tracking_stats.append({
+                    'customer': notification.customer_name,
+                    'sent': notification.email_sent_at.strftime('%d/%m/%Y') if notification.email_sent_at else 'N/A',
+                    'opened': notification.email_opened_by_client,
+                    'opened_at': notification.email_opened_at.strftime('%d/%m/%Y') if notification.email_opened_at else 'N/A'
+                })
+        
+        count = old_notifications.count()
+        
+        if count > 0:
+            print(f"📊 Sample email tracking data before cleanup:")
+            for stat in tracking_stats[:5]:
+                status = "Opened" if stat['opened'] else "Not opened"
+                print(f"  - {stat['customer']}: Sent {stat['sent']}, {status}")
+            
+            # Delete old notifications
+            old_notifications.delete()
+            print(f"✅ Cleaned up {count} old email tracking records")
+        else:
+            print("ℹ️ No old email tracking data to clean up")
+        
+        return count
+        
+    except Exception as e:
+        print(f"❌ Error cleaning up email tracking data: {e}")
+        return 0

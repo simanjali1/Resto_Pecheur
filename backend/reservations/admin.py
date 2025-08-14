@@ -1078,25 +1078,52 @@ except Exception as e:
 # ===== MODEL ADMIN CLASSES =====
 
 class NotificationAdmin(admin.ModelAdmin):
-    """Simple, clean admin interface for notifications like a message center - CASABLANCA TIMEZONE"""
+    """Enhanced admin interface for notifications with email tracking - CASABLANCA TIMEZONE"""
     
+    # ✅ REORGANIZED: Better column order without priority
     list_display = [
-        'priority_icon',
-        'read_status', 
-        'title_with_customer',
-        'message_preview',
-        'customer_contact',
-        'time_display',
-        'quick_actions'
+        'admin_read_status',      # 1️⃣ ADMIN: Has admin read this? (✅/❌)
+        'email_tracking_status',  # 2️⃣ CLIENT: Did client see email? (● ✓ ✓✓)
+        'title_with_customer',    # 3️⃣ MESSAGE: What's the notification about?
+        'message_preview',        # 4️⃣ CONTENT: Preview of message
+        'customer_contact',       # 5️⃣ CONTACT: Phone/email links
+        'time_display',          # 6️⃣ WHEN: When was this created
+        'quick_actions'          # 7️⃣ ACTIONS: Quick buttons
     ]
-    
+
+    # ✅ Also remove priority from filters since we're not showing it
     list_filter = [
-        'priority',
         'message_type', 
         'is_read',
+        'email_sent',              
+        'email_opened_by_client',  
         'created_at',
+        # 'priority',  # ✅ REMOVED
     ]
-    
+
+    # ✅ And remove from fields in the form
+    fields = [
+        'title',
+        'message',
+        'message_type',
+        # 'priority',  # ✅ REMOVED - let it default to 'normal'
+        'related_reservation',
+        'is_read',
+        'user',
+        'created_at',
+        'read_at',
+        # Email tracking section
+        'email_tracking_details',
+        'email_sent',
+        'email_sent_at',
+        'email_opened_by_client',
+        'email_opened_at',
+        'tracking_token',
+        'client_ip',
+        'client_user_agent',
+        'reservation_details'
+    ]
+        
     search_fields = [
         'title',
         'message',
@@ -1109,30 +1136,137 @@ class NotificationAdmin(admin.ModelAdmin):
         'user',
         'created_at',
         'read_at',
-        'reservation_details'
+        'email_sent_at',       # ✅ NEW: Show when email was sent
+        'email_opened_at',     # ✅ NEW: Show when email was opened
+        'tracking_token',      # ✅ NEW: Show tracking token
+        'client_ip',           # ✅ NEW: Show client IP who opened email
+        'client_user_agent',   # ✅ NEW: Show client browser info
+        'reservation_details',
+        'email_tracking_details'  # ✅ NEW: Detailed tracking info
     ]
     
     ordering = ['-created_at']
     list_per_page = 20
     
-    # Simplified fields for form
-    fields = [
-        'title',
-        'message',
-        'message_type',
-        'priority',
-        'related_reservation',
-        'is_read',
-        'user',
-        'created_at',
-        'read_at',
-        'reservation_details'
-    ]
+
+    # Enhanced actions
+    actions = ['mark_as_read', 'mark_as_unread', 'delete_read_messages', 'resend_email']  # ✅ NEW: Added resend_email
     
-    # Custom actions
-    actions = ['mark_as_read', 'mark_as_unread', 'delete_read_messages']
+    # ✅ NEW: Email tracking status display (the main feature you wanted)
+    def email_tracking_status(self, obj):
+        """Show email tracking status with ● ✓ ✓✓ indicators"""
+        if not obj.email_sent:
+            # ● Red dot = Email failed to send or not sent
+            return format_html('<span style="font-size: 18px; color: #dc3545;" title="Email non envoyé">●</span>')
+        elif obj.email_sent and obj.email_opened_by_client:
+            # ✓✓ Double checkmarks = Client opened/seen the email  
+            return format_html('<span style="font-size: 16px; color: #28a745;" title="Email ouvert par le client">✓✓</span>')
+        elif obj.email_sent and not obj.email_opened_by_client:
+            # ✓ Single checkmark = Email sent but client hasn't seen it yet
+            return format_html('<span style="font-size: 16px; color: #ffc107;" title="Email envoyé mais non ouvert">✓</span>')
+        else:
+            # Default fallback
+            return format_html('<span style="font-size: 18px; color: #6c757d;" title="Statut inconnu">●</span>')
+    email_tracking_status.short_description = "📧"
     
-    # Custom display methods
+    # ✅ NEW: Admin read status separate from email tracking
+    def admin_read_status(self, obj):
+        """Show if admin has read this notification"""
+        if obj.is_read:
+            return format_html('<span style="color: #28a745;" title="Lu par admin">✅</span>')
+        else:
+            return format_html('<span style="color: #dc3545; font-weight: bold;" title="Non lu par admin">❌</span>')
+    admin_read_status.short_description = "Admin"
+        
+    # ✅ NEW: Detailed email tracking info for the form view
+    def email_tracking_details(self, obj):
+        """Show comprehensive email tracking information"""
+        if not obj.email_sent:
+            return format_html('''
+                <div style="background: linear-gradient(135deg, #fff5f5 0%, #fee 100%); padding: 15px; border-radius: 8px; border-left: 4px solid #dc3545;">
+                    <h4 style="color: #dc3545; margin-top: 0;">❌ Email non envoyé</h4>
+                    <p style="margin: 5px 0; color: #721c24;">L'email de confirmation n'a pas encore été envoyé à ce client.</p>
+                    <p style="margin: 5px 0; color: #721c24;"><strong>Action recommandée:</strong> Contacter le client par téléphone</p>
+                </div>
+            ''')
+        
+        # Email was sent
+        sent_info = f"📤 Email envoyé le {obj.email_sent_at.strftime('%d/%m/%Y à %H:%M')}" if obj.email_sent_at else "📤 Email envoyé"
+        
+        if obj.email_opened_by_client:
+            # Client opened the email
+            opened_info = f"👁️ Ouvert le {obj.email_opened_at.strftime('%d/%m/%Y à %H:%M')}" if obj.email_opened_at else "👁️ Ouvert par le client"
+            
+            client_details = ""
+            if obj.client_ip or obj.client_user_agent:
+                client_details = f"""
+                    <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                        <small style="color: #6c757d;">
+                            <strong>Détails techniques:</strong><br>
+                            {f"IP: {obj.client_ip}<br>" if obj.client_ip else ""}
+                            {f"Navigateur: {obj.client_user_agent[:100]}..." if obj.client_user_agent else ""}
+                        </small>
+                    </div>
+                """
+            
+            return format_html('''
+                <div style="background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%); padding: 15px; border-radius: 8px; border-left: 4px solid #28a745;">
+                    <h4 style="color: #28a745; margin-top: 0;">✅ Email reçu et ouvert par le client</h4>
+                    <p style="margin: 5px 0; color: #155724;">📤 {}</p>
+                    <p style="margin: 5px 0; color: #155724;">👁️ {}</p>
+                    <p style="margin: 5px 0; color: #155724;"><strong>Statut:</strong> Le client a bien reçu et consulté l'email ✓</p>
+                    {}
+                </div>
+            ''', sent_info.replace('📤 ', ''), opened_info.replace('👁️ ', ''), client_details)
+        else:
+            # Email sent but not opened yet
+            time_since_sent = ""
+            if obj.email_sent_at:
+                from django.utils import timezone
+                diff = timezone.now() - obj.email_sent_at
+                if diff.days > 0:
+                    time_since_sent = f" (il y a {diff.days} jour{'s' if diff.days > 1 else ''})"
+                elif diff.seconds > 3600:
+                    time_since_sent = f" (il y a {diff.seconds // 3600}h)"
+                else:
+                    time_since_sent = f" (il y a {diff.seconds // 60}min)"
+            
+            return format_html('''
+                <div style="background: linear-gradient(135deg, #fffbf0 0%, #fff3cd 100%); padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                    <h4 style="color: #856404; margin-top: 0;">⏳ Email envoyé mais pas encore ouvert</h4>
+                    <p style="margin: 5px 0; color: #856404;">📤 {}{}</p>
+                    <p style="margin: 5px 0; color: #856404;">👁️ Le client n'a pas encore ouvert l'email</p>
+                    <p style="margin: 5px 0; color: #856404;"><strong>Action possible:</strong> Relancer par téléphone si urgent</p>
+                    <div style="background: #fff; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                        <small style="color: #6c757d;">
+                            <strong>Token de suivi:</strong> {}<br>
+                            <strong>URL de tracking:</strong> /track/{}/
+                        </small>
+                    </div>
+                </div>
+            ''', sent_info.replace('📤 ', ''), time_since_sent, 
+                str(obj.tracking_token)[:8] + "...", str(obj.tracking_token))
+    
+    email_tracking_details.short_description = "📧 Suivi Email Détaillé"
+    
+    # ✅ NEW: Action to resend emails
+    def resend_email(self, request, queryset):
+        """Resend email for selected notifications"""
+        count = 0
+        for notification in queryset:
+            if notification.related_reservation and notification.related_reservation.customer_email:
+                # Reset email tracking status
+                notification.email_sent = False
+                notification.email_opened_by_client = False
+                notification.email_opened_at = None
+                notification.email_sent_at = None
+                notification.save()
+                count += 1
+        
+        self.message_user(request, f"📧 {count} email(s) marqué(s) pour renvoi.")
+    resend_email.short_description = "📧 Renvoyer les emails"
+    
+    # ✅ KEEP ALL YOUR EXISTING METHODS BELOW (priority_icon, read_status, etc.)
     def priority_icon(self, obj):
         """Show priority with colored icon"""
         if obj.priority == 'urgent':
@@ -1194,10 +1328,6 @@ class NotificationAdmin(admin.ModelAdmin):
         
         # Convert to Casablanca timezone
         created_local = timezone.localtime(obj.created_at)
-        casablanca_now = timezone.localtime(timezone.now())
-        
-        print(f"🔍 NOTIFICATION TIME DEBUG - Created local: {created_local}")
-        print(f"🔍 NOTIFICATION TIME DEBUG - Current local: {casablanca_now}")
         
         return format_html('<small style="color: #6c757d;">{}<br>{}</small>',
                         created_local.strftime('%d/%m %H:%M'),
@@ -1299,19 +1429,10 @@ class NotificationAdmin(admin.ModelAdmin):
         
         return super().change_view(request, object_id, form_url, extra_context)
     
-    # Mark as read when user clicks on notification in list
-    def response_change(self, request, obj):
-        """Mark as read when user clicks on notification in list"""
-        if obj and not obj.is_read:
-            obj.mark_as_read()
-            self.message_user(request, f"✅ Notification marquée comme lue")
-        
-        return super().response_change(request, obj)
-    
     def get_queryset(self, request):
         """Optimize queries"""
         return super().get_queryset(request).select_related('user', 'related_reservation').order_by('-created_at')
-
+    
 class RestaurantInfoAdmin(admin.ModelAdmin):
     """Admin for single restaurant configuration - CASABLANCA TIMEZONE VERSION"""
     
