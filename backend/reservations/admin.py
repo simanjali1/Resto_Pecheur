@@ -1,4 +1,4 @@
-# reservations/admin.py - COMPLETE VERSION WITH ROLE MANAGEMENT + CASABLANCA TIMEZONE
+# reservations/admin.py 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User

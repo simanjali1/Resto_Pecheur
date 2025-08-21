@@ -1,4 +1,4 @@
-# restaurant_booking/urls.py - COMPLETE VERSION WITH EMAIL TRACKING AND DEBUG
+# restaurant_booking/urls.py 
 from django.contrib import admin
 from django.urls import path
 from django.shortcuts import redirect

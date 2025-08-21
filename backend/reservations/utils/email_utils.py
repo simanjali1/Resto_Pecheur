@@ -10,7 +10,6 @@ import re
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-# Try to import DNS resolver - install with: pip install dnspython
 try:
     import dns.resolver
     DNS_AVAILABLE = True

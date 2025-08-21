@@ -8,8 +8,6 @@ from collections import defaultdict
 import uuid
 
 
-# ENHANCED NOTIFICATION MODEL WITH EMAIL TRACKING
-
 class Notification(models.Model):
     """Admin notification system with email tracking capabilities"""
     

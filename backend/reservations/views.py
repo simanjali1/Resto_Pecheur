@@ -1,4 +1,4 @@
-# reservations/views.py - COMPLETE VERSION WITH EMAIL TRACKING AND DEBUG FUNCTIONS
+# reservations/views.py 
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from django.db.models import Sum, Count, Q
