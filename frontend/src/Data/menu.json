@@ -372,11 +372,7 @@
     "poisson-friture": {
       "title": "Spécialités Poisson Friture",
       "items": [
-        { 
-          "name": "Plat à la sauce", 
-          "price": 25,
-          "description": "Poisson du jour en sauce tomate, oignons, épices marocaines..."
-        },
+        
         { 
           "name": "Friture de poisson 1 pax", 
           "price": 45,
@@ -485,7 +481,7 @@
         { 
           "name": "Filet de saint pierre à la sauce blanche", 
           "price": 70,
-          "description": "Filet de saint-pierre, sauce blanche au vin blanc, légumes..."
+          "description": "Filet de saint-pierre, sauce blanche , légumes..."
         }
       ]
     },

@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 import menuData from '../Data/menu.json';
 import './MenuPage.css';
 
+// Import logo
+import logo from '../assets/images/mainPicture/logo.png';
+
 // Import all category images with correct lowercase .jpeg filenames
 import boissonsImg from '../assets/images/Category_pics/boissons.jpeg';
 import burgersImg from '../assets/images/Category_pics/burgers.jpeg';
@@ -24,142 +27,142 @@ import pouletImg from '../assets/images/Category_pics/Poulet-grille-au-four.jpeg
 import sandwichesImg from '../assets/images/Category_pics/Sandwiches.jpeg';
 import tajinesImg from '../assets/images/Category_pics/Tajine-de-poisson.jpeg';
 
-  // Images et informations pour chaque catégorie - using imported images from src
- const categoryImages = {
-    'entrees-froides': {
-      image: entreesFromdesImg,
-      color: '#27ae60',
-      nameFr: 'Entrées Froides',
-      nameAr: 'المقبلات الباردة',
-      description: 'Salades fraîches et entrées froides'
-    },
-    'entrees-chaudes': {
-      image: entreesChaudesImg,
-      color: '#e74c3c',
-      nameFr: 'Entrées Chaudes',
-      nameAr: 'المقبلات الساخنة',
-      description: 'Soupes et entrées chaudes'
-    },
-    'pates': {
-      image: patesImg,
-      color: '#f39c12',
-      nameFr: 'Les Pâtes',
-      nameAr: 'المعكرونة',
-      description: 'Spaghetti et tagliatelles'
-    },
-    'lasagnes': {
-      image: lasagnesImg,
-      color: '#d35400',
-      nameFr: 'Lasagnes',
-      nameAr: 'اللازانيا',
-      description: 'Lasagnes au four'
-    },
-    'omelettes': {
-      image: omelettesImg,
-      color: '#f1c40f',
-      nameFr: 'Omelettes',
-      nameAr: 'العجة',
-      description: 'Omelettes variées'
-    },
-    'sandwiches': {
-      image: sandwichesImg,
-      color: '#3498db',
-      nameFr: 'Sandwiches',
-      nameAr: 'السندويشات',
-      description: 'Sandwiches et wraps'
-    },
-    'paninis': {
-      image: paninisImg,
-      color: '#95a5a6',
-      nameFr: 'Paninis',
-      nameAr: 'البانيني',
-      description: 'Paninis grillés'
-    },
-    'burgers': {
-      image: burgersImg,
-      color: '#e67e22',
-      nameFr: 'Burgers',
-      nameAr: 'البرجر',
-      description: 'Burgers et steaks'
-    },
-    'poulet': {
-      image: pouletImg,
-      color: '#f39c12',
-      nameFr: 'Poulet',
-      nameAr: 'الدجاج',
-      description: 'Poulet grillé au four'
-    },
-    'plats': {
-      image: platsImg,
-      color: '#c0392b',
-      nameFr: 'Les Plats',
-      nameAr: 'الأطباق الرئيسية',
-      description: 'Brochettes et plats chauds'
-    },
-    'poisson-friture': {
-      image: poissonFritureImg,
-      color: '#3498db',
-      nameFr: 'Poisson Friture',
-      nameAr: 'السمك المقلي',
-      description: 'Poissons frits et fruits de mer'
-    },
-    'plancha': {
-      image: planchaImg,
-      color: '#16a085',
-      nameFr: 'Plancha',
-      nameAr: 'البلانشا',
-      description: 'Grillades à la plancha'
-    },
-    'plat-creme': {
-      image: platCremeImg,
-      color: '#f8f9fa',
-      nameFr: 'Plat Crème',
-      nameAr: 'أطباق بالكريمة',
-      description: 'Poissons à la crème'
-    },
-    'tajines': {
-      image: tajinesImg,
-      color: '#e74c3c',
-      nameFr: 'Tajines',
-      nameAr: 'الطاجين',
-      description: 'Tajines traditionnels'
-    },
-    'paella': {
-      image: paellaImg,
-      color: '#f39c12',
-      nameFr: 'Paëlla',
-      nameAr: 'البايلا',
-      description: 'Paëllas valenciennes'
-    },
-    'desserts': {
-      image: dessertsImg,
-      color: '#e91e63',
-      nameFr: 'Desserts',
-      nameAr: 'الحلويات',
-      description: 'Desserts et sucreries'
-    },
-    'boissons': {
-      image: boissonsImg,
-      color: '#795548',
-      nameFr: 'Boissons',
-      nameAr: 'المشروبات',
-      description: 'Thés, sodas et eau'
-    },
-    'jus': {
-      image: jusImg,
-      color: '#ff9800',
-      nameFr: 'Jus',
-      nameAr: 'العصائر',
-      description: 'Jus de fruits frais'
-    },
-    'jus-bio': {
-      image: jusBioImg,
-      color: '#4caf50',
-      nameFr: 'Jus Bio',
-      nameAr: 'العصائر الطبيعية',
-      description: 'Jus bio et naturels'
-    }
-  };
+// Images et informations pour chaque catégorie - using imported images from src
+const categoryImages = {
+  'entrees-froides': {
+    image: entreesFromdesImg,
+    color: '#27ae60',
+    nameFr: 'Entrées Froides',
+    nameAr: 'المقبلات الباردة',
+    description: 'Salades fraîches et entrées froides'
+  },
+  'entrees-chaudes': {
+    image: entreesChaudesImg,
+    color: '#e74c3c',
+    nameFr: 'Entrées Chaudes',
+    nameAr: 'المقبلات الساخنة',
+    description: 'Soupes et entrées chaudes'
+  },
+  'pates': {
+    image: patesImg,
+    color: '#f39c12',
+    nameFr: 'Les Pâtes',
+    nameAr: 'المعكرونة',
+    description: 'Spaghetti et tagliatelles'
+  },
+  'lasagnes': {
+    image: lasagnesImg,
+    color: '#d35400',
+    nameFr: 'Lasagnes',
+    nameAr: 'اللازانيا',
+    description: 'Lasagnes au four'
+  },
+  'omelettes': {
+    image: omelettesImg,
+    color: '#f1c40f',
+    nameFr: 'Omelettes',
+    nameAr: 'العجة',
+    description: 'Omelettes variées'
+  },
+  'sandwiches': {
+    image: sandwichesImg,
+    color: '#3498db',
+    nameFr: 'Sandwiches',
+    nameAr: 'السندويشات',
+    description: 'Sandwiches et wraps'
+  },
+  'paninis': {
+    image: paninisImg,
+    color: '#95a5a6',
+    nameFr: 'Paninis',
+    nameAr: 'البانيني',
+    description: 'Paninis grillés'
+  },
+  'burgers': {
+    image: burgersImg,
+    color: '#e67e22',
+    nameFr: 'Burgers',
+    nameAr: 'البرجر',
+    description: 'Burgers et steaks'
+  },
+  'poulet': {
+    image: pouletImg,
+    color: '#f39c12',
+    nameFr: 'Poulet',
+    nameAr: 'الدجاج',
+    description: 'Poulet grillé au four'
+  },
+  'plats': {
+    image: platsImg,
+    color: '#c0392b',
+    nameFr: 'Les Plats',
+    nameAr: 'الأطباق الرئيسية',
+    description: 'Brochettes et plats chauds'
+  },
+  'poisson-friture': {
+    image: poissonFritureImg,
+    color: '#3498db',
+    nameFr: 'Poisson Friture',
+    nameAr: 'السمك المقلي',
+    description: 'Poissons frits et fruits de mer'
+  },
+  'plancha': {
+    image: planchaImg,
+    color: '#16a085',
+    nameFr: 'Plancha',
+    nameAr: 'البلانشا',
+    description: 'Grillades à la plancha'
+  },
+  'plat-creme': {
+    image: platCremeImg,
+    color: '#f8f9fa',
+    nameFr: 'Plat Crème',
+    nameAr: 'أطباق بالكريمة',
+    description: 'Poissons à la crème'
+  },
+  'tajines': {
+    image: tajinesImg,
+    color: '#e74c3c',
+    nameFr: 'Tajines',
+    nameAr: 'الطاجين',
+    description: 'Tajines traditionnels'
+  },
+  'paella': {
+    image: paellaImg,
+    color: '#f39c12',
+    nameFr: 'Paëlla',
+    nameAr: 'البايلا',
+    description: 'Paëllas valenciennes'
+  },
+  'desserts': {
+    image: dessertsImg,
+    color: '#e91e63',
+    nameFr: 'Desserts',
+    nameAr: 'الحلويات',
+    description: 'Desserts et sucreries'
+  },
+  'boissons': {
+    image: boissonsImg,
+    color: '#795548',
+    nameFr: 'Boissons',
+    nameAr: 'المشروبات',
+    description: 'Thés, sodas et eau'
+  },
+  'jus': {
+    image: jusImg,
+    color: '#ff9800',
+    nameFr: 'Jus',
+    nameAr: 'العصائر',
+    description: 'Jus de fruits frais'
+  },
+  'jus-bio': {
+    image: jusBioImg,
+    color: '#4caf50',
+    nameFr: 'Jus Bio',
+    nameAr: 'العصائر الطبيعية',
+    description: 'Jus bio et naturels'
+  }
+};
 
 function MenuPage() {
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -176,12 +179,14 @@ function MenuPage() {
 
   return (
     <div className="menu-page">
-      {/* Header */}
+      {/* Header with Logo */}
       <header className="menu-header">
         <div className="container">
-          <Link to="/" className="back-button">← Retour</Link>
+          <Link to="/" className="back-button">Retour</Link>
           <h1>Menu Digital</h1>
-          <h2>Resto Pêcheur - Tiznit</h2>
+          <div className="menu-header-logo">
+            <img src={logo} alt="Resto Pêcheur Logo" />
+          </div>
         </div>
       </header>
 
@@ -230,7 +235,7 @@ function MenuPage() {
             <div className="category-details">
               <div className="category-header">
                 <button className="back-btn" onClick={handleBackToCategories}>
-                  ← Retour aux catégories
+                  Retour aux catégories
                 </button>
                 <div className="category-info">
                   <span 
@@ -285,11 +290,12 @@ function MenuPage() {
         </div>
       </div>
 
-      {/* Footer */}
+       {/* Footer */}
       <footer className="menu-footer">
         <div className="container">
-          <p>📞 +212 528 86 25 47 | 📍 M7RG+RJ3, Bd Mohamed Hafidi, Tiznit</p>
-          <p>&copy; 2025 Resto Pêcheur - Tous les prix sont en Dirhams (DH) - 100% Halal</p>
+          <p>📍 Route De Tafraout Quartier Industriel, Tiznit 85000 Maroc</p>
+          <p>📞 0661-460593 | ✉️ contact@resto-pecheur.ma</p>
+          <p>&copy; 2025 Resto Pêcheur - Tous les prix sont en Dirhams (DH) </p>
         </div>
       </footer>
     </div>
